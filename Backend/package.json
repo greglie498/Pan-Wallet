@@ -1,0 +1,45 @@
+{
+    "name": "panwallet-backend",
+    "version": "1.0.0",
+    "description": "PanWallet backend API - Sprint 1",
+    "main": "dist/server.js",
+    "scripts": {
+        "dev": "nodemon",
+        "build": "tsc --project tsconfig.json",
+        "start": "node dist/server.js",
+        "typecheck": "tsc --noEmit",
+        "prisma:generate": "prisma generate",
+        "prisma:migrate": "prisma migrate dev",
+        "prisma:deploy": "prisma studio",
+        "seed": "ts-node prisma/seed.ts"
+    },
+    "dependencies": {
+        "@prisma/client": "^7.8.0",
+        "bcrypt": "^6.0.0",
+        "compression": "^1.8.1",
+        "cors": "^2.8.6",
+        "express": "^5.2.1",
+        "express-rate-limit": "^8.5.2",
+        "helmet": "^8.2.0",
+        "jsonwebtoken": "^9.0.3",
+        "morgan": "^1.11.0",
+        "swagger-ui-express": "^5.0.1",
+        "winston": "^3.19.0",
+        "yamljs": "^0.3.0",
+        "zod": "^4.4.3"
+    },
+    "devDependencies": {
+        "@types/bcrypt": "^6.0.0",
+        "@types/compression": "^1.8.1",
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
+        "@types/jsonwebtoken": "^9.0.10",
+        "@types/morgan": "^1.9.10",
+        "@types/node": "^26.0.1",
+        "@types/yamljs": "^0.2.34",
+        "nodemon": "^3.1.14",
+        "prisma": "^7.8.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^6.0.3"
+    }
+}
