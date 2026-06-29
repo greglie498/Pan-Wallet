@@ -10,11 +10,12 @@
         "typecheck": "tsc --noEmit",
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",
-        "prisma:deploy": "prisma studio",
+        "prisma:deploy": "prisma migrate deploy",
+        "prisma:studio": "prisma studio",
         "seed": "ts-node prisma/seed.ts"
     },
     "dependencies": {
-        "@prisma/client": "^7.8.0",
+        "@prisma/client": "^6.19.3",
         "bcrypt": "^6.0.0",
         "compression": "^1.8.1",
         "cors": "^2.8.6",
@@ -23,6 +24,7 @@
         "helmet": "^8.2.0",
         "jsonwebtoken": "^9.0.3",
         "morgan": "^1.11.0",
+        "prisma": "^6.19.3",
         "swagger-ui-express": "^5.0.1",
         "winston": "^3.19.0",
         "yamljs": "^0.3.0",
@@ -38,7 +40,6 @@
         "@types/node": "^26.0.1",
         "@types/yamljs": "^0.2.34",
         "nodemon": "^3.1.14",
-        "prisma": "^7.8.0",
         "ts-node": "^10.9.2",
         "typescript": "^6.0.3"
     }
