@@ -8,11 +8,11 @@ class WalletService {
         return wallets;
     }
 
-    async getWallet(walletId: string, userId: string): Promise<Wallet>{
-        const wallet = await walletRepository.findByUserId(walletId);
+    async getWallet(walletId: string, userId: string): Promise<Wallet> {
+        const wallet = await walletRepository.findById(walletId);
 
         if (!wallet || wallet.userId !== userId) {
-            throw new NotFoundError("wallet");
+            throw new NotFoundError("Wallet");
         }
 
         return wallet;

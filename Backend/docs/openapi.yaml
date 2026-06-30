@@ -1,0 +1,8 @@
+openapi: 3.0.3
+info:
+  title: PanWallet API
+  version: 1.0.0
+  description: Sprint 1 -- Auth & Wallet endpoints
+servers:
+  - url: /api/v1
+  paths: {}

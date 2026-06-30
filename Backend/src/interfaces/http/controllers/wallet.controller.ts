@@ -10,7 +10,7 @@ class WalletController {
             throw new UnauthorizedError();
         }
 
-        const walletts = await walletService.listWallets(req.user.id);
+        const wallets = await walletService.listWallets(req.user.id);
         return sendSuccess(res, 200, wallets, "Wallets retrieved successfully");
     });
 }

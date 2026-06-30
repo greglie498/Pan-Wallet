@@ -28,7 +28,7 @@ export function authenticate (
     const token = authHeader.slice(7); // strip "Bearer "
 
     try {
-        const payload = jwtSeervice.verifyAccessToken(token);
+        const payload = jwtService.verifyAccessToken(token);
         req.user = {id: payload.sub, phone: payload.phone };
         next();
     } catch (error) {
