@@ -13,7 +13,7 @@ interface ErrorResponse {
     errors?: unknown;
 }
 
-export function SendSuccess<T>(
+export function sendSuccess<T>(
     res: Response,
     statusCode: number,
     data: T | null,
