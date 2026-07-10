@@ -2,7 +2,309 @@ openapi: 3.0.3
 info:
   title: PanWallet API
   version: 1.0.0
-  description: Sprint 1 -- Auth & Wallet endpoints
+  description: |
+    PanWallet backend API — Sprint 1.
+    Covers authentication (register, login, refresh, logout) and wallet listing.
 servers:
   - url: /api/v1
-  paths: {}
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Registration, login, and session management
+  - name: Wallets
+    description: Wallet retrieval
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSuccessResponse"
+        "409":
+          description: Phone number or email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationErrorResponse"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in with phone number and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSuccessResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Account suspended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Exchange a refresh token for a new token pair
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshInput"
+      responses:
+        "200":
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokensResponse"
+        "401":
+          description: Invalid or revoked refresh token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke a refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshInput"
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimpleSuccessResponse"
+
+  /wallets:
+    get:
+      tags: [Wallets]
+      summary: List the authenticated user's wallets
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Wallets retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WalletListResponse"
+        "401":
+          description: Missing or invalid access token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterInput:
+      type: object
+      required: [phoneNumber, name, password]
+      properties:
+        phoneNumber:
+          type: string
+          example: "+254712345678"
+        name:
+          type: string
+          example: "Jane Wanjiru"
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          example: "Password123"
+
+    LoginInput:
+      type: object
+      required: [phoneNumber, password]
+      properties:
+        phoneNumber:
+          type: string
+        password:
+          type: string
+          format: password
+
+    RefreshInput:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+
+    Tokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        phoneNumber:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          nullable: true
+
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          enum: [PANWALLET_INTERNAL, MPESA, ORANGE_MONEY]
+        walletNumber:
+          type: string
+        currency:
+          type: string
+        balance:
+          type: string
+          example: "0.00"
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED, CLOSED]
+
+    AuthSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/User"
+            tokens:
+              $ref: "#/components/schemas/Tokens"
+
+    TokensResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          $ref: "#/components/schemas/Tokens"
+
+    WalletListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Wallet"
+
+    SimpleSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        code:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string

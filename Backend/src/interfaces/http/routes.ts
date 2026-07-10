@@ -36,8 +36,8 @@ router.post(
 );
 
 router.post(
-    "auth/logout",
-        validate(logoutSchema),
+    "/auth/logout",
+    validate(logoutSchema),
     authController.logout
 );
 

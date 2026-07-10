@@ -38,14 +38,14 @@ export function createApp(): Application {
 
     //----- API docs ------------------------------------------------------------------------------------------------------------
     try{
-    const openapiPath = path.join(__dirname, "../docs/apenapi.yaml");
+    const openapiPath = path.join(__dirname, "../docs/openapi.yaml");
     const swaggerDocument = YAML.load(openapiPath);
     app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     } catch (error) {
-        logger.warn("OpenAPI spec not found -- /api-docs disabled until docs/apenapi.yaml exists");
+        logger.warn("OpenAPI spec not found -- /api-docs disabled.", {error: error instanceof Error ? error.message : String(error),  });
     }
     //----- API routes ---------------------------------------------------------------------------------------------------------
-    app.use("api/v1", router);
+    app.use("/api/v1", router);
 
     //---- 404 handler ----------------------------------------------------------------------------------------------------------
     app.use((req: Request, res: Response) => {
