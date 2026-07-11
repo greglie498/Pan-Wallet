@@ -30,10 +30,16 @@ export const envSchema = z.object({
     DEFAULT_WALLET_PROVIDER: z.string().default("PANWALLET_INTERNAL"),
     DEFAULT_WALLET_CURRENCY: z.string().default("KES"),
 
+    // Firebase
+    FIREBASE_PROJECT_ID: z.string().min(1),
+    FIREBASE_CLIENT_EMAIL: z.string().email(),
+    FIREBASE_PRIVATE_KEY: z.string().min(1),
+
     // Admin seed (optional)
     SEED_ADMIN_EMAIL: z.string().email().optional(),
     SEED_ADMIN_USERNAME: z.string().min(3).optional(),
     SEED_ADMIN_PASSWORD: z.string().min(8).optional(),
+
 });
 
 

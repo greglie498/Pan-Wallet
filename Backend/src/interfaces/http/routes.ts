@@ -9,6 +9,7 @@ import{
     loginSchema,
     refreshSchema,
     logoutSchema,
+    firebaseAuthSchema
 } from "./validators/auth.validators";
 
 const router = Router();
@@ -26,6 +27,13 @@ router.post(
     authRateLimit,
     validate(loginSchema),
     authController.login
+);
+
+router.post(
+    "/auth/firebase",
+    authRateLimit,
+    validate(firebaseAuthSchema),
+    authController.firebaseLogin
 );
 
 router.post(

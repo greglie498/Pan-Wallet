@@ -34,6 +34,10 @@ export const loginSchema = z.object({
     password: z.string().min(1, "Password is required."),
 });
 
+export const firebaseAuthSchema = z.object({
+    idToken: z.string().min(1, "Firebase ID token is required."),
+});
+
 export const refreshSchema = z.object({
     refreshToken: z.string().min(1, "Refresh token is required"),
 });

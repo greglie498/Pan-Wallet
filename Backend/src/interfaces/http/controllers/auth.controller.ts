@@ -14,6 +14,11 @@ class AuthController {
         return sendSuccess(res, 200, result, "Login successfull");
     });
 
+    firebaseLogin = asyncHandler(async (req: Request, res: Response) => {
+        const result = await authService.firebaseLogin(req.body);
+        return sendSuccess(res, 200, result, "Authentication successfull");
+    })
+
     refresh = asyncHandler(async (req: Request, res: Response) => {
         const tokens = await authService.refresh(req.body);
         return sendSuccess(res, 200, tokens, "Token refreshed successfully");

@@ -34,3 +34,7 @@ export interface AuthResult {
     };
     tokens: AuthTokens;
 }
+
+export interface firebaseAuthInput {
+    idToken: string;
+}

@@ -1,5 +1,7 @@
 import crypto from "crypto";
 import { Prisma } from "@prisma/client";
+import { firebaseAuth } from "../../config/firebase";
+import { DecodedIdToken } from "firebase-admin/auth";
 import { userRepository } from "../../infrastructure/repositories/user.repository";
 import { walletRepository } from "../../infrastructure/repositories/wallet.repository";
 import { refreshTokenRepository } from "../../infrastructure/repositories/refresh-token.repository";
@@ -15,6 +17,7 @@ import {
     LogoutInput,
     AuthTokens,
     AuthResult,
+    firebaseAuthInput
 } from "./auth.type";
 import { prisma } from "../../infrastructure/database/prisma";
 
@@ -144,6 +147,69 @@ class AuthService {
             },
             tokens,
         };
+    }
+
+    async firebaseLogin(input: firebaseAuthInput): Promise<AuthResult>  {
+        // step 1 - verify the Firebase ID token and extract the phone number
+        let decodedToken: DecodedIdToken;
+        try {
+            decodedToken = await firebaseAuth.verifyIdToken(input.idToken);
+        } catch (error) {
+            throw new UnauthorizedError("Invalid or expired Firebase ID token");
+        }
+
+        const phoneNumber = decodedToken.phone_number;
+        if (!phoneNumber) {
+            throw new UnauthorizedError("Firebase  token does not contain a phone number");
+        }
+
+        // Step 2 - find existing user or create a new one
+        let user = await userRepository.findByPhone(phoneNumber);
+        if (!user) {
+            // First time this phone number has authenticated with Firebase, create a new user
+            user = await prisma.$transaction(async (tx) => {
+                const newUser = await userRepository.create(
+                    {
+                        phoneNumber: phoneNumber,
+                        name: decodedToken.name ??  phoneNumber,
+                        email: decodedToken.email ,
+                        // No password since this is a Firebase-authenticated user
+                    },
+                    tx
+                );
+                
+                await walletRepository.create(
+                    {
+                        provider: WalletProvider.PANWALLET_INTERNAL,
+                        walletNumber: phoneNumber,
+                        currency: env.DEFAULT_WALLET_CURRENCY.toUpperCase(),    
+                        user: { connect: { id: newUser.id } },
+                    },
+                    tx
+                );
+
+                return newUser;
+            });
+        }
+
+        if (user.status === "SUSPENDED") {
+            throw new ForbiddenError("This account has been suspended");
+        }
+
+        // Step 3 - issue our own JWT pair
+        const family = crypto.randomUUID();
+        const tokens = await this.issueTokens(user.id, user.phoneNumber, family);
+
+        return {
+            user:  {
+                id: user.id,
+                phoneNumber: user.phoneNumber,
+                name: user.name,
+                email: user.email,
+            },
+            tokens,
+        };
+
     }
 
     async refresh(input: RefreshInput): Promise<AuthTokens> {
