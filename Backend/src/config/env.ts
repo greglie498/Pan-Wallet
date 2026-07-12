@@ -35,6 +35,22 @@ export const envSchema = z.object({
     FIREBASE_CLIENT_EMAIL: z.string().email(),
     FIREBASE_PRIVATE_KEY: z.string().min(1),
 
+    // M-Pesa
+    MPESA_CONSUMER_KEY: z.string().min(1),
+    MPESA_CONSUMER_SECRET: z.string().min(1),
+    MPESA_SHORTCODE: z.string().min(1),
+    MPESA_PASSKEY: z.string().min(1),
+    MPESA_BASE_URL: z.string().url(),
+
+    // Orange Money
+    ORANGE_MONEY_CLIENT_ID: z.string().min(1),
+    ORANGE_MONEY_CLIENT_SECRET: z.string().min(1),
+    ORANGE_MONEY_BASE_URL: z.string().url(),
+
+    // ExchangeRate API
+    EXCHANGE_RATE_API_KEY: z.string().min(1),
+    EXCHANGE_RATE_BASE_URL: z.string().url(),
+
     // Admin seed (optional)
     SEED_ADMIN_EMAIL: z.string().email().optional(),
     SEED_ADMIN_USERNAME: z.string().min(3).optional(),
