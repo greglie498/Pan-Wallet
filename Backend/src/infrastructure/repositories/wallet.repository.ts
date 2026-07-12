@@ -10,15 +10,16 @@ class WalletRepository {
         return client.wallet.create({data});
     }
 
-    async findById(id: string): Promise<Wallet | null> {
-        return prisma.wallet.findUnique({where: {id}});
-    }
 
     async findByUserId(userId: string): Promise<Wallet []> {
         return prisma.wallet.findMany({
             where: { userId },
             orderBy: { createdAt: "asc" },
         })
+    }
+
+    async findById(id: string): Promise<Wallet | null> {
+        return prisma.wallet.findUnique({where: {id}});
     }
 
     async findByProviderAndWalletNumber(
@@ -30,6 +31,19 @@ class WalletRepository {
                 provider_walletNumber: { provider, walletNumber }
              },
         });
+    }
+
+    async findByUserAndProvider (
+        userId: string,
+        provider: WalletProvider
+    ): Promise<Wallet | null> {
+        return prisma.wallet.findFirst({
+            where: { userId, provider },
+        });
+    }
+
+    async delete(id: string): Promise<void>{
+        await prisma.wallet.delete({ where: { id } });
     }
 }
 
