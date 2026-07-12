@@ -8,7 +8,7 @@ class WalletService {
         return walletRepository.findByUserId(userId);
     }
 
-    async getwallet (walletId: string, userId: string): Promise<Wallet> {
+    async getWallet (walletId: string, userId: string): Promise<Wallet> {
         const wallet = await walletRepository.findById(walletId);
 
         if(!wallet || wallet.userId !== userId) {
@@ -18,7 +18,7 @@ class WalletService {
         return wallet;
     }
 
-    async linkwallet(userId: string, input: LinkWalletInput): Promise<Wallet> {
+    async linkWallet(userId: string, input: LinkWalletInput): Promise<Wallet> {
         const provider = input.provider as WalletProvider;
 
         // Check 1 - is this wallet number already linked to any account?
@@ -82,4 +82,4 @@ class WalletService {
         }
 }
 
-export const walletservice = new WalletService();
+export const walletService = new WalletService();

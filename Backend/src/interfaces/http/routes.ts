@@ -11,6 +11,7 @@ import{
     logoutSchema,
     firebaseAuthSchema
 } from "./validators/auth.validators";
+import { linkWalletSchema } from "./validators/wallet.validators";
 
 const router = Router();
 
@@ -51,7 +52,29 @@ router.post(
 
 
 //---- Wallet routes ------------------------------------------------------------------------------------------------------
-router.get("/wallets", authenticate, walletController.listwallets);
+router.get(
+    "/wallets", 
+    authenticate, 
+    walletController.listwallets
+);
+
+router.get(
+    "/wallets/:walletId",
+    authenticate,
+    walletController.getWallet
+);
+
+router.post(
+    "/wallets/link",
+    authenticate,
+    walletController.linkWallet
+);
+
+router.delete(
+    "wallets/:walletId/unlink",
+    authenticate,
+    walletController.unlinkWallet
+);
 
 
 export { router };
