@@ -18,7 +18,7 @@ enum UserStatus {
 enum WalletProvider {
     PANWALLET_INTERNAL
     MPESA
-    ORANGE_MONEY
+    MTN_MOMO
 }
 
 enum WalletStatus {

@@ -74,7 +74,7 @@ class WalletService {
         private getCurrencyForProvider(provider: WalletProvider): string {
             const currencyMap: Record<string, string> ={
                 MPESA: "KES",
-                ORANGE_MONEY: "XOF",
+                MTN_MOMO: "XOF",  // MTN MoMo operates accross mutiples currencies
                 PANWALLET_INTERNAL: "USD",
             };
 

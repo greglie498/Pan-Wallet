@@ -42,10 +42,16 @@ export const envSchema = z.object({
     MPESA_PASSKEY: z.string().min(1),
     MPESA_BASE_URL: z.string().url(),
 
-    // Orange Money
-    ORANGE_MONEY_CLIENT_ID: z.string().min(1),
-    ORANGE_MONEY_CLIENT_SECRET: z.string().min(1),
-    ORANGE_MONEY_BASE_URL: z.string().url(),
+    // MTN MoMo
+    MTN_COLLECTION_SUBSCRIPTION_KEY: z.string().min(1),
+    MTN_DISBURSEMENT_SUBSCRIPTION_KEY: z.string().min(1),
+    MTN_COLLECTION_API_USER: z.string().uuid(),
+    MTN_COLLECTION_API_KEY: z.string().min(1),
+    MTN_DISBURSEMENT_API_USER: z.string().uuid(),
+    MTN_DISBURSEMENT_API_KEY: z.string().min(1),
+    MTN_BASE_URL: z.string().url(),
+    MTN_ENVIRONMENT: z.enum(["sandbox", "production"]).default("sandbox"),
+    MTN_CURRENCY: z.string().default("EUR"),
 
     // ExchangeRate API
     EXCHANGE_RATE_API_KEY: z.string().min(1),

@@ -163,7 +163,7 @@ class MpesaProvider {
                 }
             );
 
-            if (response.data.responseCode !== "0") {
+            if (response.data.ResponseCode !== "0") {
                 throw new InternalServerError(
                     `STK push failed: ${response.data.ResponseDescription}`
                 );
@@ -179,7 +179,7 @@ class MpesaProvider {
             if (error instanceof InternalServerError || error instanceof BadRequestError ) {
                 throw error;
             }
-            logger.error({"STK push request failed:", error});
+            logger.error("STK push request failed:", error);
             throw new InternalServerError("Failed to initiate M-Pesa payment");
         }
     }
