@@ -78,7 +78,7 @@ class WalletService {
                 PANWALLET_INTERNAL: "USD",
             };
 
-            return currencyMap[provider] ?? "KES";
+            return currencyMap[provider] ?? "USD";
         }
 }
 
