@@ -248,4 +248,4 @@ class MpesaProvider {
     }
 }
 
-export const mpesaprovider = new MpesaProvider();
+export const mpesaProvider = new MpesaProvider();

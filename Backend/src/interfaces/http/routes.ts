@@ -12,6 +12,11 @@ import{
     firebaseAuthSchema
 } from "./validators/auth.validators";
 import { linkWalletSchema } from "./validators/wallet.validators";
+import { transactionController } from "./controllers/transaction.controller";
+import {
+    getQuoteSchema,
+    initiateTransferSchema,
+} from "./validators/transaction.validators";
 
 const router = Router();
 
@@ -74,6 +79,45 @@ router.delete(
     "wallets/:walletId/unlink",
     authenticate,
     walletController.unlinkWallet
+);
+
+
+//------ Transaction routes ------------------------------------------------------------------------------------------------
+router.post(
+    "/transactions/quote",
+    authenticate,
+    validate(getQuoteSchema),
+    transactionController.getQuote
+);
+
+router.post(
+    "/transactions",
+    authenticate,
+    transactionController.listTransactions
+);
+
+router.get(
+    "/transactions",
+    authenticate,
+    transactionController.listTransactions
+);
+
+router.get(
+    "/transactions/:transactionId",
+    authenticate,
+    transactionController.getTransaction
+);
+
+
+//----- Provider callbacks (no auth - calls by providers) ---------------------------------------------------------------------------
+router.post(
+    "/transactions/mpesa/callback",
+    transactionController.mpesaCallback
+);
+
+router.post(
+    "/transactions/mtn/callback",
+    transactionController.mtnCallback
 );
 
 

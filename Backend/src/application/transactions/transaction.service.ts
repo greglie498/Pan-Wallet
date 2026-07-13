@@ -4,7 +4,7 @@ import { walletRepository } from "../../infrastructure/repositories/wallet.repos
 import { transactionRepository } from "../../infrastructure/repositories/transaction.repository";
 import { exchangeRateRepository } from "../../infrastructure/repositories/exchange-rate.repository";
 import { exchangeRateProvider } from "../../infrastructure/providers/exchange-rate.provider";
-import { mpesaprovider } from "../../infrastructure/providers/mpesa.provider";
+import { mpesaProvider } from "../../infrastructure/providers/mpesa.provider";
 import { mtnMomoProvider } from "../../infrastructure/providers/mtn-momo.provider";
 import {
     NotFoundError,
@@ -85,7 +85,7 @@ class TransactionService {
     ): Promise<string> {
         switch (recipientProvider) {
             case "MPESA": {
-                const response = await mpesaprovider.initiateStkPush (
+                const response = await mpesaProvider.initiateStkPush (
                     recipientNumber,
                     amount,
                     externalId,
@@ -107,7 +107,7 @@ class TransactionService {
             }
 
             default:
-                throw new BadRequestError(\
+                throw new BadRequestError(
                     `Unsupported provider: ${recipientProvider}`
                 );
         }
@@ -270,7 +270,7 @@ class TransactionService {
     }
     
     async handleCallback (result: CallbackResult): Promise<void> {
-        const transaction = await transactionRepository.findbyProviderReference(
+        const transaction = await transactionRepository.findByProviderReference(
             result.providerReferenceId
         );
 
@@ -331,7 +331,7 @@ class TransactionService {
             if (!wallet || wallet.userId !== userId) {
                 throw new NotFoundError("wallet");
             }
-            return transactionRepository.findBySenderwalletId(walletId);
+            return transactionRepository.findBySenderWalletId(walletId);
         }
 
         return transactionRepository.findByUserId(userId);

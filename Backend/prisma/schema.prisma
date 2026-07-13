@@ -85,6 +85,7 @@ model Transaction {
     recipientWalletId    String?
     recipientProvider   WalletProvider
     recipientNumber     String
+    providerReferenceId String?             
     amount              Decimal             @db.Decimal(18, 2)
     fee                 Decimal             @default(0) @db.Decimal(18, 2)
     exchangeRateId      String?
