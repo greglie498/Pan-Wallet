@@ -9,13 +9,15 @@
       "distribution": "internal"
     },
     "preview": {
+      "distribution": "internal"
+      
+    },
+    "production": {
+      "autoIncrement": true,
       "distribution": "internal",
       "env": {
         "GOOGLE_SERVICES_JSON": "google-services.json"
       }
-    },
-    "production": {
-      "autoIncrement": true
     }
   },
   "submit": {
