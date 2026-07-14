@@ -11,6 +11,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthStore } from "@/lib/store";
+import "../global.css";
 
 // Keep splash screen visible while fonts load and auth initializes
 SplashScreen.preventAutoHideAsync();

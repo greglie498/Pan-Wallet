@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx"],
+    presets: [require("nativewind/preset")],
     theme: {
         extend: {
             colors: {
@@ -10,7 +11,7 @@ module.exports = {
                     light: "#1A2F50",
                     dark: "#050D1A",
                 },
-                Aaccent: {
+                accent: {
                     DEFAULT: "#F5A623", // warm amber
                     light: "#F7BC55",
                     dark: "#D4891A",
