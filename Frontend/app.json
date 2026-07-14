@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "PanWallet",
+    "slug": "panwallet",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A1628"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A1628"
+      },
+      "package": "com.panwallet.app",
+      "googleServiceFile": "./google-services.json"
+    },
+    "plugins": [
+      "expo-router",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth"
+    ],
+    "scheme": "panwallet",
+    "experiments": {
+      "typeRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f634602d-16d8-4462-a854-f2ff6bb029d1"
+      }
+    }
+  }
+}

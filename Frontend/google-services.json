@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "489696590170",
+    "project_id": "panwallet-950c9",
+    "storage_bucket": "panwallet-950c9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:489696590170:android:a31d29a6932aecd8cf5b63",
+        "android_client_info": {
+          "package_name": "com.panwallet.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBes1j8DNc0zmE9FeOdq9WFsT4QnYhJlJU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
