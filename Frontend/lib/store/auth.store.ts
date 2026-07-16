@@ -1,8 +1,9 @@
+// lib/store/auth.store.ts
+
 import { create } from "zustand";
-import auth from "@react-native-firebase/auth";
-import { useWalletStore } from "./wallet.store";
-import { authApi, AuthResponse } from "../api/auth.api";
+import { authApi } from "../api/auth.api";
 import { tokenStorage } from "../api/client";
+import { useWalletStore } from "./wallet.store";
 import { router } from "expo-router";
 
 interface User {
@@ -13,52 +14,35 @@ interface User {
 }
 
 interface AuthState {
-  // State
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitializing: boolean;
   error: string | null;
 
-  // Actions
   initialize: () => Promise<void>;
   loginWithPassword: (phoneNumber: string, password: string) => Promise<void>;
-  loginWithFirebase: (phoneNumber: string) => Promise<() => void>;
-  verifyOtp: (otp: string) => Promise<void>;
+  registerWithPassword: (
+    phoneNumber: string,
+    name: string,
+    password: string
+  ) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
-
-  // Internal
-  _firebaseConfirmation: FirebaseConfirmation | null;
-  _setUser: (user: User | null) => void;
 }
 
-// Firebase confirmation result type
-interface FirebaseConfirmation {
-  confirm: (code: string) => Promise<void>;
-}
-
-const useAuthStore = create<AuthState>((set, get) => ({
-  // ── Initial state ──────────────────────────────────────────────
+const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   isLoading: false,
   isInitializing: true,
   error: null,
-  _firebaseConfirmation: null,
 
-  _setUser: (user) =>
-    set({ user, isAuthenticated: !!user }),
-
-  // ── Initialize — check for existing tokens on app launch ───────
+  // ── Initialize ─────────────────────────────────────────────────
   initialize: async () => {
     try {
       const accessToken = await tokenStorage.getAccessToken();
-
       if (accessToken) {
-        // Tokens exist — user was previously logged in
-        // The API client will use these tokens automatically
-        // We don't store user data locally — fetch it on next API call
         set({ isAuthenticated: true });
       }
     } catch {
@@ -69,7 +53,31 @@ const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  // ── Password login (fallback path) ────────────────────────────
+  // ── Register ───────────────────────────────────────────────────
+  registerWithPassword: async (phoneNumber, name, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await authApi.register({ phoneNumber, name, password });
+      await tokenStorage.setTokens(
+        result.tokens.accessToken,
+        result.tokens.refreshToken
+      );
+      set({
+        user: result.user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      router.replace("/(app)/dashboard");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again.";
+      set({ error: message, isLoading: false });
+    }
+  },
+
+  // ── Login ──────────────────────────────────────────────────────
   loginWithPassword: async (phoneNumber, password) => {
     set({ isLoading: true, error: null });
     try {
@@ -93,84 +101,7 @@ const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  // ── Firebase OTP — Step 1: send OTP ───────────────────────────
-  loginWithFirebase: async (phoneNumber) => {
-    set({ isLoading: true, error: null });
-    try {
-      const confirmation = await auth().signInWithPhoneNumber(phoneNumber);
-
-      set({
-        _firebaseConfirmation: {
-          confirm: async (code: string) => {
-            await confirmation.confirm(code);
-          },
-        },
-        isLoading: false,
-      });
-
-      router.push("/(auth)/otp");
-
-      // Return unsubscribe function for auth state listener
-      const unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
-        if (firebaseUser) {
-          const idToken = await firebaseUser.getIdToken();
-          try {
-            const result = await authApi.firebaseLogin({ idToken });
-            await tokenStorage.setTokens(
-              result.tokens.accessToken,
-              result.tokens.refreshToken
-            );
-            set({
-              user: result.user,
-              isAuthenticated: true,
-            });
-            router.replace("/(app)/dashboard");
-          } catch (error) {
-            set({ error: "Authentication failed. Please try again." });
-          }
-          unsubscribe();
-        }
-      });
-
-      return unsubscribe;
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to send OTP. Please try again.";
-      set({ error: message, isLoading: false });
-      return () => {};
-    }
-  },
-
-  // ── Firebase OTP — Step 2: verify OTP ─────────────────────────
-  verifyOtp: async (otp) => {
-    set({ isLoading: true, error: null });
-    const { _firebaseConfirmation } = get();
-
-    if (!_firebaseConfirmation) {
-      set({
-        error: "OTP session expired. Please request a new code.",
-        isLoading: false,
-      });
-      return;
-    }
-
-    try {
-      await _firebaseConfirmation.confirm(otp);
-      // onAuthStateChanged listener in loginWithFirebase handles
-      // the backend call and navigation after this succeeds
-      set({ isLoading: false });
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Invalid OTP. Please try again.";
-      set({ error: message, isLoading: false });
-    }
-  },
-
-  // ── Logout ────────────────────────────────────────────────────
+  // ── Logout ─────────────────────────────────────────────────────
   logout: async () => {
     set({ isLoading: true });
     try {
@@ -178,23 +109,21 @@ const useAuthStore = create<AuthState>((set, get) => ({
       if (refreshToken) {
         await authApi.logout(refreshToken);
       }
-      await auth().signOut();
     } catch {
       // Continue with local logout even if server call fails
     } finally {
       await tokenStorage.clearTokens();
+      useWalletStore.getState().reset();
       set({
         user: null,
         isAuthenticated: false,
         isLoading: false,
-        _firebaseConfirmation: null,
+        error: null,
       });
       router.replace("/(auth)/welcome");
     }
-    useWalletStore.getState().reset();
   },
 
-  // ── Clear error ───────────────────────────────────────────────
   clearError: () => set({ error: null }),
 }));
 
