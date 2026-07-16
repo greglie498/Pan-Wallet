@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card, Button, Badge } from "@/component/ui";
+import { Card, Button, Badge } from "@/components/ui";
 import { useAuthStore, useWalletStore } from "@/lib/store";
 import { transactionApi, Transaction } from "@/lib/api";
 import { Wallet } from "@/lib/api/wallet.api";

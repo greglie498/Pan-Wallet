@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Input } from "@/component/ui";
+import { Button, Input } from "@/components/ui";
 import { useAuthStore } from "@/lib/store";
 
 const COUNTRY_CODES = [

@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button } from "@/component/ui";
+import { Button } from "@/components/ui";
 import { useAuthStore } from "@/lib/store";
 
 export default function OtpScreen() {
