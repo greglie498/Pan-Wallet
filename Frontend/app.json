@@ -25,7 +25,11 @@
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      "expo-image",
+      "expo-splash-screen",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "scheme": "panwallet",
     "experiments": {

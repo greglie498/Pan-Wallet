@@ -2,7 +2,7 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosError } from "ax
 import * as SecureStore from "expo-secure-store";
 
 // ── Constants ──────────────────────────────────────────────────────
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://10.0.2.2:4000/api/v1";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://192.168.214.21:4000/api/v1";
 
 const ACCESS_TOKEN_KEY = "panwallet_access_token";
 const REFRESH_TOKEN_KEY = "panwallet_refresh_token";
@@ -30,6 +30,7 @@ export const apiClient: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "ngrok-skip-browser-warning": "true",
   },
 });
 

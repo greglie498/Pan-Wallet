@@ -6,7 +6,10 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+       "env": {
+        "EXPO_PUBLIC_API_URL": "https://gonad-atypical-lather.ngrok-free.dev/api/v1"
+      }
     },
     "preview": {
       "developmentClient": true,
@@ -18,7 +21,7 @@
     "production": {
       "autoIncrement": true,
       "distribution": "internal"
-    },
+    }
   },
   "submit": {
     "production": {}
