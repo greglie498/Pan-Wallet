@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
     const email = process.env.SEED_ADMIN_EMAIL;
-    const username = process.env.SEED_ADMIN_EMAIL;
+    const username = process.env.SEED_ADMIN_USERNAME;
     const password = process.env.SEED_ADMIN_PASSWORD;
 
     if (!email || !username || !password ) {

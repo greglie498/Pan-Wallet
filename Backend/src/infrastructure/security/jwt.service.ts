@@ -5,6 +5,7 @@ import { UnauthorizedError } from "../../domain/error";
 export interface TokenPayload {
     sub: string;
     phone: string;
+    role?: string;
 }
 
 export interface RefreshTokenPayload extends TokenPayload {

@@ -17,8 +17,38 @@ import {
     getQuoteSchema,
     initiateTransferSchema,
 } from "./validators/transaction.validators";
+import { adminLoginSchema } from "./validators/admin .validators";
+import { adminController } from "./controllers/admin.controller";
+import { authenticateAdmin } from "./middleware/authenticate-admin";
 
 const router = Router();
+
+//------- Admin routes --------------------------------------------------------------------------------------------------------------
+router.post(
+    "/admin/login",
+    authRateLimit,
+    validate(adminLoginSchema),
+    adminController.login
+);
+
+router.get(
+    "/admin/stats",
+    authenticateAdmin,
+    adminController.getStats
+);
+
+router.get(
+    "/admin/users",
+    authenticateAdmin,
+    adminController.getUsers
+);
+
+router.get(
+    "/admin/transactions",
+    authenticateAdmin,
+    adminController.getTransactions
+);
+
 
 //------- Auth routes ----------------------------------------------------------------------------------------------------------------
 router.post(
