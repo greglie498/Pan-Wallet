@@ -15,9 +15,9 @@ export function Card({
   ...props
 }: CardProps) {
   const variantClasses = {
-    default: "bg-white rounded-2xl",
-    elevated: "bg-white rounded-2xl shadow-lg shadow-black/10",
-    outlined: "bg-white rounded-2xl border border-gray-100",
+    default: "bg-white dark:bg-gray-800 rounded-2xl",
+    elevated: "bg-white dark:bg-gray-800 rounded-2xl shadow-lg shadow-black/10",
+    outlined: "bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700",
   }[variant];
 
   const paddingClasses = {

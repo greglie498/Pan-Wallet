@@ -155,13 +155,13 @@ export default function WalletsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView className="flex-1 bg-surface dark:bg-gray-900">
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       {/* Header */}
       <View className="px-6 py-4 flex-row items-center justify-between border-b border-gray-100">
         <View>
-          <Text className="text-primary text-2xl font-bold">My Wallets</Text>
+          <Text className="text-primary dark:text-white text-2xl font-bold">My Wallets</Text>
           <Text className="text-muted text-sm">
             {wallets.length} wallet{wallets.length !== 1 ? "s" : ""} linked
           </Text>

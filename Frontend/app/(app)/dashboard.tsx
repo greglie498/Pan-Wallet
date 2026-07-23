@@ -14,6 +14,7 @@ import { Card, Button, Badge } from "@/components/ui";
 import { useAuthStore, useWalletStore } from "@/lib/store";
 import { transactionApi, Transaction } from "@/lib/api";
 import { Wallet } from "@/lib/api/wallet.api";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // ── Sub-components ─────────────────────────────────────────────────
 
@@ -163,7 +164,7 @@ export default function DashboardScreen() {
   }, [loadData]);
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
+    <SafeAreaView className="flex-1 bg-surface dark:bg-gray-900">
       <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
 
       <ScrollView
@@ -179,24 +180,27 @@ export default function DashboardScreen() {
         }
       >
         {/* ── Header ──────────────────────────────────────────── */}
-        <View className="bg-primary px-6 pt-4 pb-20">
-          <View className="flex-row justify-between items-center">
+        <View className="bg-primary px-6 pt-4 pb-8">
+          <View className="flex-row justify-between items-center mb-8">
             <View>
               <Text className="text-gray-400 text-sm">
                 {getGreeting()},
               </Text>
 
-              <Text className="text-white text-2xl font-bold mt-1">
+              <Text className="text-white text-xl font-bold">
                 {firstName} 👋
               </Text>
             </View>
 
-            <TouchableOpacity
-              className="w-11 h-11 rounded-full bg-primary-light items-center justify-center"
-              onPress={() => logout()}
-            >
-              <Text className="text-white text-lg">⚙️</Text>
-            </TouchableOpacity>
+            <View className="flex-row items-center">
+              <ThemeToggle size={40} />
+              <TouchableOpacity
+                className="w-10 h-10 rounded-full bg-primary-light items-center justify-center ml-2"
+                onPress={() => logout()}
+              >
+                <Text className="text-white text-sm">↩</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -273,19 +277,19 @@ export default function DashboardScreen() {
                   className="mr-4"
                   onPress={() => router.push("/(app)/wallets/link")}
                 >
-                  <Card variant="outlined" padding="md">
+                  <Card variant="elevated" padding="md">
 
                     <View className="items-center justify-center py-5">
 
                       <View className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 items-center justify-center mb-3">
 
-                        <Text className="text-2xl text-gray-400">
+                        <Text className="text-primary dark:text-white text-2xl font-bold">
                           +
                         </Text>
 
                       </View>
 
-                      <Text className="text-muted font-medium">
+                      <Text className="text-muted dark:text-gray-400 text-sm">
                         Link Wallet
                       </Text>
 
@@ -315,7 +319,7 @@ export default function DashboardScreen() {
 
           </View>
 
-          <View className="h-px bg-gray-100 mb-8" />
+          <View className="flex-row items-center py-4 border-b border-gray-100 dark:border-graay-700" />
           {/* ── Recent transactions ────────────────────────────── */}
           <View className="mb-8">
             <View className="flex-row justify-between items-center mb-4">

@@ -42,15 +42,15 @@ export function Input({
       )}
 
       <View
-        className={`flex-row items-center bg-white border-2 ${borderClass} rounded-xl px-4 h-14`}
+        className={`flex-row items-center bg-white dark:bg-gray-800 border-2 ${borderClass} rounded-xl px-4 h-14`}
       >
         {leftIcon && (
           <View className="mr-3">{leftIcon}</View>
         )}
 
         <TextInput
-          className="flex-1 text-primary text-base font-sans"
-          placeholderTextColor="#94A3B8"
+          className="flex-1 text-primary dark:text-white text-base"
+          placeholderTextColor={focused ? "#F5A623" : "#94A3B8"}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           {...props}
