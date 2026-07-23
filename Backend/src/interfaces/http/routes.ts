@@ -11,7 +11,7 @@ import{
     logoutSchema,
     firebaseAuthSchema
 } from "./validators/auth.validators";
-import { linkWalletSchema } from "./validators/wallet.validators";
+import { linkWalletSchema, topUpSchema } from "./validators/wallet.validators";
 import { transactionController } from "./controllers/transaction.controller";
 import {
     getQuoteSchema,
@@ -75,6 +75,13 @@ router.post(
     walletController.linkWallet
 );
 
+router.post(
+    "/wallets/:walletId/topup",
+    authenticate,
+    validate(topUpSchema),
+    walletController.topUp
+)
+
 router.delete(
     "wallets/:walletId/unlink",
     authenticate,
@@ -93,7 +100,7 @@ router.post(
 router.post(
     "/transactions",
     authenticate,
-    transactionController.listTransactions
+    transactionController.initiateTransfer
 );
 
 router.get(

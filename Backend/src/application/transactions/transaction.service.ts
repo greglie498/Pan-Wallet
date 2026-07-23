@@ -1,5 +1,7 @@
 import { Transaction, WalletProvider } from "@prisma/client";
 import { prisma } from "../../infrastructure/database/prisma";
+import { Prisma } from "@prisma/client";
+import { env } from "../../config/env";
 import { walletRepository } from "../../infrastructure/repositories/wallet.repository";
 import { transactionRepository } from "../../infrastructure/repositories/transaction.repository";
 import { exchangeRateRepository } from "../../infrastructure/repositories/exchange-rate.repository";
@@ -10,7 +12,6 @@ import {
     NotFoundError,
     BadRequestError,
     UnprocessableError,
-    InternalServerError,
 } from "../../domain/error";
 import { logger } from "../../config/logger";
 import {
@@ -22,21 +23,27 @@ import {
 
 // Fixed fee per provider in source currency
 const PROVIDER_FEES: Record<string, number> = {
-    MPESA: 25,      // KES 25 per transaction
-    MTN_MOMO: 1,    // 1 EUR equivalent in sandbox
+    MPESA: 25,
+    MTN_MOMO: 1,
     PANWALLET_INTERNAL: 0,
+};
+
+// Placeholder callback URLs for sandbox testing
+const CALLBACK_URLS: Record<string, string> = {
+    MPESA: "https://panwallet.app/api/v1/transactions/mpesa/callback",
+    MTN_MOMO: "https://panwallet.app/api/v1/transactions/mtn/callback",
 };
 
 class TransactionService {
 
-    //----- Private helpers ---------------------------------------------------------------------------------------------------
+    // ── Private helpers ────────────────────────────────────────────
 
-    private getCurrencyForProvider (provider: string): string {
+    private getCurrencyForProvider(provider: string): string {
         const map: Record<string, string> = {
             MPESA: "KES",
             MTN_MOMO: "XOF",
             PANWALLET_INTERNAL: "USD",
-        }; 
+        };
         return map[provider] ?? "USD";
     }
 
@@ -46,12 +53,11 @@ class TransactionService {
         amount: number
     ): Promise<TransferQuote> {
         const senderWallet = await walletRepository.findById(senderWalletId);
-        if (!senderWallet) throw new NotFoundError ("Sender wallet");
+        if (!senderWallet) throw new NotFoundError("Sender wallet");
 
         const senderCurrency = senderWallet.currency;
-        const recipientCurrency = this.getCurrencyForProvider (recipientProvider);
+        const recipientCurrency = this.getCurrencyForProvider(recipientProvider);
 
-        // Fetch exchange rate
         const { rate, convertedAmount } = await exchangeRateProvider.convert(
             amount,
             senderCurrency,
@@ -75,7 +81,7 @@ class TransactionService {
         };
     }
 
-    private async callProvider (
+    private async callProvider(
         recipientProvider: string,
         recipientNumber: string,
         amount: number,
@@ -83,14 +89,21 @@ class TransactionService {
         description: string,
         callbackUrl?: string
     ): Promise<string> {
+        logger.info("Calling provider:", {
+            recipientProvider,
+            amount,
+            recipientNumber,
+            callbackUrl: callbackUrl ?? CALLBACK_URLS[recipientProvider],
+        });
+
         switch (recipientProvider) {
             case "MPESA": {
-                const response = await mpesaProvider.initiateStkPush (
+                const response = await mpesaProvider.initiateStkPush(
                     recipientNumber,
                     amount,
                     externalId,
                     description,
-                    callbackUrl ?? `${process.env["BASE_URL"]}/api/v1/transactions/mpesa/callback`
+                    `${env.BASE_URL}/api/v1/transactions/mpesa/callback`
                 );
                 return response.CheckoutRequestID;
             }
@@ -101,7 +114,8 @@ class TransactionService {
                     amount,
                     externalId,
                     description,
-                    callbackUrl ?? ""
+                    description,
+                    callbackUrl ?? CALLBACK_URLS["MTN_MOMO"]
                 );
                 return referenceId;
             }
@@ -113,10 +127,9 @@ class TransactionService {
         }
     }
 
+    // ── Public methods ─────────────────────────────────────────────
 
-    //------ Public methods -----------------------------------------------------------------------------------------------------------------------------------
-
-    async getQuote (
+    async getQuote(
         senderWalletId: string,
         recipientProvider: string,
         amount: number,
@@ -124,32 +137,26 @@ class TransactionService {
     ): Promise<TransferQuote> {
         const senderWallet = await walletRepository.findById(senderWalletId);
 
-        if(!senderWallet || senderWallet.userId !== userId) {
-            throw new NotFoundError("Sender Wallet");
+        if (!senderWallet || senderWallet.userId !== userId) {
+            throw new NotFoundError("Sender wallet");
         }
 
         if (senderWallet.status !== "ACTIVE") {
-            throw new UnprocessableError("Sender Wallet is not active");
+            throw new UnprocessableError("Sender wallet is not active.");
         }
 
-        if(amount <= 0) {
-            throw new BadRequestError ("Transfer amount must be greater than zero.");
+        if (amount <= 0) {
+            throw new BadRequestError("Transfer amount must be greater than zero.");
         }
 
-        const quote = await this.buildQuote(
-            senderWalletId,
-            recipientProvider,
-            amount
-        );
-
-        return quote;
+        return this.buildQuote(senderWalletId, recipientProvider, amount);
     }
 
-    async inititateTransfer(
+    async initiateTransfer(
         userId: string,
         input: InitiateTransferInput
     ): Promise<TransferResult> {
-        // Step 1 - validate sender wallet
+        // Step 1 — validate sender wallet
         const senderWallet = await walletRepository.findById(input.senderWalletId);
 
         if (!senderWallet || senderWallet.userId !== userId) {
@@ -164,24 +171,39 @@ class TransactionService {
             throw new BadRequestError("Transfer amount must be greater than zero.");
         }
 
-        const senderCurrency = senderWallet.currency;
-        const recipientCurrency = this.getCurrencyForProvider(
-            input.recipientProvider
-        );
+        // Step 1b — balance check
+        const requiredAmount = new Prisma.Decimal(input.amount);
+        if (senderWallet.balance.lessThan(requiredAmount)) {
+            throw new BadRequestError(
+                `Insufficient balance. Available: ${senderWallet.currency} ${senderWallet.balance.toFixed(2)}. Required: ${senderWallet.currency} ${requiredAmount.toFixed(2)}.`
+            );
+        }
 
-        // Step 2 - fetch and store exchange rate
+        const fee = PROVIDER_FEES[input.recipientProvider] ?? 0;
+        const senderCurrency = senderWallet.currency;
+        const recipientCurrency = this.getCurrencyForProvider(input.recipientProvider);
+
+        // Step 2 — fetch live exchange rate
         const { rate, convertedAmount } = await exchangeRateProvider.convert(
             input.amount,
             senderCurrency,
             recipientCurrency
         );
 
-        const fee = PROVIDER_FEES[input.recipientProvider] ?? 0;
-        const description = input.description ?? `PanWallet transfer to ${input.recipientNumber}`;
+        logger.info("Exchange rate fetched for transfer:", {
+            inputAmount: input.amount,
+            senderCurrency,
+            recipientCurrency,
+            rate,
+            convertedAmount,
+        });
 
-        // Step 3 - create exchange rate record + PENDING transaction atomically
-        const { transaction, exchangeRate } = await prisma .$transaction( async (tx) => {
-            // Save the exchange rate at time of transaction
+        const description =
+            input.description ??
+            `PanWallet transfer to ${input.recipientNumber}`;
+
+        // Step 3 — create exchange rate record + PENDING transaction atomically
+        const { transaction } = await prisma.$transaction(async (tx) => {
             const savedRate = await exchangeRateRepository.create(
                 {
                     sourceCurrency: senderCurrency,
@@ -191,7 +213,6 @@ class TransactionService {
                 tx
             );
 
-            // Create the transaction as PENDING
             const newTransaction = await transactionRepository.create(
                 {
                     senderWallet: { connect: { id: input.senderWalletId } },
@@ -200,17 +221,15 @@ class TransactionService {
                     amount: input.amount,
                     fee,
                     exchangeRate: { connect: { id: savedRate.id } },
-                    status: "PENDING"
+                    status: "PENDING",
                 },
                 tx
             );
 
-            return { transaction: newTransaction, exchangeRate: savedRate };
+            return { transaction: newTransaction };
         });
 
-
-        // Step 4 - call the provider outside the DB transaction
-        // (provider calls are slow and should not hold a DB transaction open)
+        // Step 4 — call provider outside DB transaction
         let providerReferenceId: string;
 
         try {
@@ -223,7 +242,49 @@ class TransactionService {
                 input.callbackUrl
             );
         } catch (error) {
-            // Provider call failed - mark transaction as FAILED immediately
+            // In development — auto-complete transaction despite provider callback error
+            if (env.NODE_ENV === "development") {
+                logger.warn("Provider call failed in sandbox — auto-completing transaction.", {
+                    transactionId: transaction.id,
+                    error: error instanceof Error ? error.message : String(error),
+                });
+
+                await transactionRepository.updateProviderReference(
+                    transaction.id,
+                    `SANDBOX-${transaction.id}`
+                );
+
+                await transactionRepository.updateStatus(
+                    transaction.id,
+                    "COMPLETED",
+                    undefined
+                );
+
+                logger.info("Sandbox: transaction auto-completed.", {
+                    transactionId: transaction.id,
+                });
+
+                return {
+                    transactionId: transaction.id,
+                    status: "COMPLETED",
+                    providerReferenceId: `SANDBOX-${transaction.id}`,
+                    quote: {
+                        senderWalletId: input.senderWalletId,
+                        senderCurrency,
+                        recipientProvider: input.recipientProvider,
+                        recipientNumber: input.recipientNumber,
+                        amount: input.amount,
+                        convertedAmount,
+                        exchangeRate: rate,
+                        fee,
+                        totalDeducted: input.amount + fee,
+                        recipientCurrency,
+                    },
+                    message: "Sandbox transfer completed successfully.",
+                };
+            }
+
+            // Production — mark as failed and re-throw
             await transactionRepository.updateStatus(
                 transaction.id,
                 "FAILED",
@@ -232,8 +293,8 @@ class TransactionService {
             throw error;
         }
 
-        // Step 5 - update transaction with provider reference ID
-        await transactionRepository.updateProviderReference (
+        // Step 5 — store provider reference ID (only reached in production)
+        await transactionRepository.updateProviderReference(
             transaction.id,
             providerReferenceId
         );
@@ -265,25 +326,25 @@ class TransactionService {
             message:
                 input.recipientProvider === "MPESA"
                     ? "STK push sent. Ask the recipient to check their phone."
-                    : "Payment request sent to recipient's MTN MoMo account."
+                    : "Payment request sent to recipient's MTN MoMo account.",
         };
     }
-    
-    async handleCallback (result: CallbackResult): Promise<void> {
+
+    async handleCallback(result: CallbackResult): Promise<void> {
         const transaction = await transactionRepository.findByProviderReference(
             result.providerReferenceId
         );
 
-        if(!transaction) {
-            logger.warn("Callback received for unknow transaction.", {
+        if (!transaction) {
+            logger.warn("Callback received for unknown transaction.", {
                 providerReferenceId: result.providerReferenceId,
             });
             return;
         }
 
-        if(transaction.status !== "PENDING") {
-            logger.warn("Callback received for non-pending transaction. ", {
-                trasactionId: transaction.id,
+        if (transaction.status !== "PENDING") {
+            logger.warn("Callback received for non-pending transaction.", {
+                transactionId: transaction.id,
                 currentStatus: transaction.status,
             });
             return;
@@ -295,9 +356,9 @@ class TransactionService {
             result.failureReason
         );
 
-        logger.info("Transaction status updated via callback. ", {
+        logger.info("Transaction status updated via callback.", {
             transactionId: transaction.id,
-            status: result.success ? "COMPLETED" : "FAILED"
+            status: result.success ? "COMPLETED" : "FAILED",
         });
     }
 
@@ -309,7 +370,6 @@ class TransactionService {
 
         if (!transaction) throw new NotFoundError("Transaction");
 
-        // Verify the transaction belongs to this user via the sender wallet
         const senderWallet = await walletRepository.findById(
             transaction.senderWalletId
         );
@@ -326,10 +386,9 @@ class TransactionService {
         walletId?: string
     ): Promise<Transaction[]> {
         if (walletId) {
-            // Verify wallet belongs to user
             const wallet = await walletRepository.findById(walletId);
             if (!wallet || wallet.userId !== userId) {
-                throw new NotFoundError("wallet");
+                throw new NotFoundError("Wallet");
             }
             return transactionRepository.findBySenderWalletId(walletId);
         }

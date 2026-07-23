@@ -42,6 +42,34 @@ class WalletRepository {
         });
     }
 
+    async topUp(
+        id: string,
+        amount: Prisma.Decimal,
+        tx?: Prisma.TransactionClient
+    ): Promise <Wallet> {
+        const client = tx ?? prisma;
+        return client.wallet.update({
+            where: { id },
+            data: {
+                balance: { increment: amount },
+            },
+        });
+    }
+
+    async deductBalance (
+        id: string,
+        amount: Prisma.Decimal,
+        tx?: Prisma.TransactionClient
+    ): Promise <Wallet> {
+        const client = tx ?? prisma;
+        return client.wallet.update({
+            where: { id },
+            data : {
+                balance: { decrement: amount },
+            },
+        });
+    }
+
     async delete(id: string): Promise<void>{
         await prisma.wallet.delete({ where: { id } });
     }

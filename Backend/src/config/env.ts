@@ -5,6 +5,9 @@ export const envSchema = z.object({
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     PORT: z.coerce.number().default(4000),
 
+    // URL
+    BASE_URL: z.string().url().default("http://localhost:4000"),
+
     // Database
     DATABASE_URL: z.string().url(),
 
@@ -40,6 +43,7 @@ export const envSchema = z.object({
     MPESA_CONSUMER_SECRET: z.string().min(1),
     MPESA_SHORTCODE: z.string().min(1),
     MPESA_PASSKEY: z.string().min(1),
+    MPESA_SKIP_CALLBACK: z.string().min(1),
     MPESA_BASE_URL: z.string().url(),
 
     // MTN MoMo

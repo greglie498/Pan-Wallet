@@ -179,61 +179,75 @@ export default function DashboardScreen() {
         }
       >
         {/* ── Header ──────────────────────────────────────────── */}
-        <View className="bg-primary px-6 pt-4 pb-8">
-          <View className="flex-row justify-between items-center mb-8">
+        <View className="bg-primary px-6 pt-4 pb-20">
+          <View className="flex-row justify-between items-center">
             <View>
               <Text className="text-gray-400 text-sm">
                 {getGreeting()},
               </Text>
-              <Text className="text-white text-xl font-bold">
+
+              <Text className="text-white text-2xl font-bold mt-1">
                 {firstName} 👋
               </Text>
             </View>
 
             <TouchableOpacity
-              className="w-10 h-10 rounded-full bg-primary-light items-center justify-center"
+              className="w-11 h-11 rounded-full bg-primary-light items-center justify-center"
               onPress={() => logout()}
             >
-              <Text className="text-white text-sm">↩</Text>
+              <Text className="text-white text-lg">⚙️</Text>
             </TouchableOpacity>
-          </View>
-
-          {/* ── Total balance card ─────────────────────────────── */}
-          <View className="bg-primary-light rounded-2xl p-5">
-            <Text className="text-gray-400 text-sm mb-1">
-              Total Balance
-            </Text>
-            <Text className="text-white text-4xl font-bold mb-3">
-              ${totalBalance.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </Text>
-            <View className="flex-row items-center">
-              <View className="w-2 h-2 rounded-full bg-success mr-2" />
-              <Text className="text-gray-400 text-xs">
-                {wallets.filter((w) => w.status === "ACTIVE").length} active
-                wallet{wallets.length !== 1 ? "s" : ""}
-              </Text>
-            </View>
           </View>
         </View>
 
-        <View className="px-6 -mt-4">
+        {/* Main Content */}
+        <View className="px-6 -mt-12">
 
-          {/* ── Wallet list ────────────────────────────────────── */}
-          <View className="mb-6">
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-primary text-lg font-bold">
+          {/* Balance Card */}
+          <View className="mb-8">
+            <View className="bg-primary-light rounded-3xl p-6 shadow-lg">
+
+              <Text className="text-gray-400 text-sm">
+                Total Balance
+              </Text>
+
+              <Text className="text-white text-4xl font-extrabold mt-2 mb-4">
+                ${totalBalance.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
+
+              <View className="flex-row items-center">
+                <View className="w-2 h-2 rounded-full bg-success mr-2" />
+
+                  <Text className="text-gray-300">
+                    {wallets.filter((w) => w.status === "ACTIVE").length}
+                    {" "}Active Wallets
+                  </Text>
+              </View>
+
+            </View>
+          </View>
+
+          {/* Wallet Section */}
+
+          <View className="mb-8">
+
+            <View className="flex-row justify-between items-center mb-5">
+
+              <Text className="text-primary text-xl font-extrabold">
                 My Wallets
               </Text>
+
               <TouchableOpacity
                 onPress={() => router.push("/(app)/wallets")}
               >
-                <Text className="text-accent text-sm font-semibold">
+                <Text className="text-muted text-sm font-medium">
                   See all
                 </Text>
               </TouchableOpacity>
+
             </View>
 
             {walletsLoading ? (
@@ -242,60 +256,76 @@ export default function DashboardScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                className="-mx-2"
-                contentContainerStyle={{ paddingHorizontal: 8 }}
+                contentContainerStyle={{
+                  paddingRight: 16,
+                }}
               >
                 {wallets.map((wallet) => (
                   <WalletCard
                     key={wallet.id}
                     wallet={wallet}
-                    onPress={() =>
-                      router.push("/(app)/wallets")
-                    }
+                    onPress={() => router.push("/(app)/wallets")}
                   />
                 ))}
 
-                {/* Add wallet button */}
                 <TouchableOpacity
-                  className="mr-4 items-center justify-center"
                   style={{ width: 160 }}
+                  className="mr-4"
                   onPress={() => router.push("/(app)/wallets/link")}
                 >
                   <Card variant="outlined" padding="md">
-                    <View className="items-center justify-center py-4">
-                      <View className="w-10 h-10 rounded-full border-2 border-dashed border-gray-300 items-center justify-center mb-2">
-                        <Text className="text-gray-400 text-xl">+</Text>
+
+                    <View className="items-center justify-center py-5">
+
+                      <View className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 items-center justify-center mb-3">
+
+                        <Text className="text-2xl text-gray-400">
+                          +
+                        </Text>
+
                       </View>
-                      <Text className="text-muted text-sm text-center">
-                        Link a wallet
+
+                      <Text className="text-muted font-medium">
+                        Link Wallet
                       </Text>
+
                     </View>
+
                   </Card>
                 </TouchableOpacity>
               </ScrollView>
             )}
+
           </View>
 
-          {/* ── Send money button ──────────────────────────────── */}
-          <View className="mb-6">
-            <Button
-              title="Send Money"
-              variant="primary"
-              size="lg"
-              onPress={() => router.push("/(app)/transactions/quote")}
+          <View className="h-px bg-gray-100 mb-8" />
+
+            {/* Send Money */}
+
+            <View className="mb-8">
+
+              <Button
+                title="Send Money"
+                variant="primary"
+                size="lg"
+                onPress={() =>
+                  router.push("/(app)/transactions/quote")
+                }
             />
+
           </View>
 
+          <View className="h-px bg-gray-100 mb-8" />
           {/* ── Recent transactions ────────────────────────────── */}
           <View className="mb-8">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-primary text-lg font-bold">
+              <Text className="text-primary text-xl font-extrabold">
                 Recent Transactions
               </Text>
               <TouchableOpacity
                 onPress={() => router.push("/(app)/transactions")}
               >
-                <Text className="text-accent text-sm font-semibold">
+                <Text className="text-muted text-sm font-medium">
                   See all
                 </Text>
               </TouchableOpacity>

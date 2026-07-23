@@ -14,4 +14,11 @@ export const linkWalletSchema = z.object({
         .trim(),
 });
 
+export const topUpSchema = z.object({
+    amount: z.coerce
+        .number()
+        .positive("Amount must be greater than zero.")
+        .max(10000, "Maximum top-up is $10,000."),
+});
+
 export type LinkWalletInput = z.infer<typeof linkWalletSchema>

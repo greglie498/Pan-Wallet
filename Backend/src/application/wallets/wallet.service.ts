@@ -1,4 +1,5 @@
 import { Wallet, WalletProvider } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { walletRepository } from "../../infrastructure/repositories/wallet.repository";
 import { NotFoundError, ConflictError, BadRequestError } from "../../domain/error";
 import { LinkWalletInput } from "../../interfaces/http/validators/wallet.validators";
@@ -53,6 +54,33 @@ class WalletService {
             user: { connect: {id: userId } },
         });
 
+    }
+
+    async  topUp(
+        walletId: string,
+        userId: string,
+        amount: number
+    ): Promise<Wallet> {
+        // Validate ownership
+        const wallet = await walletRepository.findById(walletId);
+        if (!wallet || wallet.userId !== userId) {
+            throw new NotFoundError("wallet");
+        }
+
+        if (wallet.status !== "ACTIVE"){
+            throw new BadRequestError("CAnnot top up a suspended or closed wallet.");
+        }
+
+        if (amount <= 0) {
+            throw new BadRequestError("Top-up amount must be greater than zero");
+        }
+
+        if (amount > 10000) {
+            throw new BadRequestError("Maximum top-up amount is $10,000 per transaction.");
+        }
+
+        const decimalAmount = new Prisma.Decimal(amount);
+        return walletRepository.topUp(walletId, decimalAmount);
     }
 
     async unlinkWallet(walletId: string, userId: string): Promise<void> {

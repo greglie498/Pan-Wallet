@@ -92,6 +92,11 @@ const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
       });
       router.replace("/(app)/dashboard");
+      await tokenStorage.setTokens(
+        result.tokens.accessToken,
+        result.tokens.refreshToken
+      );
+      console.log("ACCES TOKEN:", result.tokens.accessToken);
     } catch (error: unknown) {
       const message =
         error instanceof Error

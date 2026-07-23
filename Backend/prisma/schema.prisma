@@ -82,7 +82,7 @@ model Wallet {
 model Transaction {
     id                  String              @id @default(uuid())
     senderWalletId      String
-    recipientWalletId    String?
+    recipientWalletId   String?
     recipientProvider   WalletProvider
     recipientNumber     String
     providerReferenceId String?             

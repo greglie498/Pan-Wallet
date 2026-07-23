@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const getQuoteSchema = z.object({
-    senderWalletid: z.string().uuid("Invalid sender wallet ID. "),
+    senderWalletId: z.string().uuid("Invalid sender wallet ID. "),
     recipientProvider: z.enum(["MPESA", "MTN_MOMO"] as const, {
         error: () => ({
             message: "Provider must be MPESA or MTN_MOMO.",
@@ -15,7 +15,7 @@ export const getQuoteSchema = z.object({
 
 export const initiateTransferSchema = z.object({
     senderWalletId: z.string().uuid("Invalid sender wallet ID."),
-    recipientprovider: z.enum(["MPESA", "MTN_MOMO"] as const, {
+    recipientProvider: z.enum(["MPESA", "MTN_MOMO"] as const, {
         error: () => ({
             message: "Provider must be MPESA or MTN_MOMO",
         }),

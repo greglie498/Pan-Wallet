@@ -31,11 +31,21 @@ class WalletController {
         return sendSuccess(res, 201, wallet, "Wallet linked successfully. ");
     });
 
+    topUp = asyncHandler( async (req: Request, res: Response) => {
+        if (!req.user) throw new UnauthorizedError();
+        const wallet = await walletService.topUp(
+            req.params.walletId as string,
+            req.user.id,
+            req.body.amount
+        );
+        return sendSuccess (res, 200, wallet, "Wallet topped up successfully.")
+    });
+
     unlinkWallet = asyncHandler(async (req: Request, res: Response ) => {
         if (!req.user) throw new UnauthorizedError();
 
         await walletService.unlinkWallet(req.params.walletId as string , req.user.id);
-        return sendSuccess(res, 200, null, "Wallet unliked successfully. ");
+        return sendSuccess(res, 200, null, "Wallet unlinked successfully. ");
     });
 }
 

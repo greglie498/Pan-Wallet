@@ -123,7 +123,6 @@ class MpesaProvider {
     }
 
     //------ Public methods --------------------------------------------------------------------------------------------------
-
     async initiateStkPush (
         phoneNumber: string,
         amount: number,
@@ -134,6 +133,13 @@ class MpesaProvider {
         const token = await this.getAccessToken();
         const { password, timestamp } = this.generatePassword();
         const normalizedPhone = this.normalizePhone(phoneNumber);
+
+        logger.info("STK Push request body:", {
+            callBackUrl: callbackUrl,
+            shortcode: this.shortcode,
+            phone: normalizedPhone,
+            amount: Math.ceil(amount),
+        });
 
         if (amount < 1) {
             throw new BadRequestError("M-Pesa minimum transaction amount is KES 1. ");
@@ -179,7 +185,15 @@ class MpesaProvider {
             if (error instanceof InternalServerError || error instanceof BadRequestError ) {
                 throw error;
             }
-            logger.error("STK push request failed:", error);
+            if (axios.isAxiosError(error)) {
+                logger.error("STK push axios error:", {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message,
+                });
+            } else {
+                logger.error("STK push request failed:", error);
+            }
             throw new InternalServerError("Failed to initiate M-Pesa payment");
         }
     }
@@ -189,6 +203,7 @@ class MpesaProvider {
         const { password, timestamp } = this.generatePassword();
 
         try {
+
             const response = await axios.post<StkQueryResponse>(
                 `${this.baseUrl}/mpesa/stkpushquery/v1/query`,
                 {
@@ -207,7 +222,14 @@ class MpesaProvider {
 
             return response.data;
         }catch (error) {
-            logger.error("STK status query failed:", error);
+            if (axios.isAxiosError(error)) {
+                logger.error("M-Pesa token error:", {
+                    status: error.response?.status,
+                    data: error.response?.data,
+                });
+            } else {
+                logger.error("M-Pesa token error:", error);
+            }
             throw new InternalServerError("Failed to query M-Pesa payment status.");
         }
     }

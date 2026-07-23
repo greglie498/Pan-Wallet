@@ -26,7 +26,7 @@ class TransactionController {
     initiateTransfer = asyncHandler (async (req: Request, res: Response) => {
         if (!req.user) throw new UnauthorizedError();
 
-        const result = await transactionService.inititateTransfer(
+        const result = await transactionService.initiateTransfer(
             req.user.id,
             req.body
         );

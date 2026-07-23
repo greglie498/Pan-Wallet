@@ -56,6 +56,7 @@ export interface TransferResult {
 
 export const transactionApi = {
   getQuote: async (payload: QuotePayload): Promise<TransferQuote> => {
+    console.log("Quote payload:", JSON.stringify(payload));
     const response = await apiClient.post("/transactions/quote", payload);
     return response.data.data;
   },
