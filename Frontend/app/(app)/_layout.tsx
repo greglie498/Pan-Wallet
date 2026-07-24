@@ -59,6 +59,12 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
+        name="topup"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
         name="wallets/index"
         options={{
           title: "Wallets",

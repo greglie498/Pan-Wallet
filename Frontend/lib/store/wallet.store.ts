@@ -42,6 +42,18 @@ const useWalletStore = create<WalletState>((set, get) => ({
     }
   },
 
+  forceRefresh: async () => {
+    set({ isLoading: true, error: null, lastFetched: null });
+    try {
+      const wallets = await walletApi.list();
+      set({ wallets, isLoading: false, lastFetched: new Date() });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to fetch wallets.";
+      set({ error: message, isLoading: false });
+    }
+  },
+
   // ── Link wallet ────────────────────────────────────────────────
   linkWallet: async (provider, walletNumber) => {
     set({ isLoading: true, error: null });
