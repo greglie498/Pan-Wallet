@@ -1,10 +1,12 @@
-// lib/store/auth.store.ts
-
 import { create } from "zustand";
 import { authApi } from "../api/auth.api";
 import { tokenStorage } from "../api/client";
 import { useWalletStore } from "./wallet.store";
 import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+
+const ADMIN_KEY = "panwallet_is_admin";
+const ADMIN_DATA_KEY = "panwallet_admin_data";
 
 interface User {
   id: string;
@@ -13,9 +15,18 @@ interface User {
   email: string | null;
 }
 
+interface AdminData {
+  id: string;
+  username: string;
+  email: string;
+  role: string;
+}
+
 interface AuthState {
   user: User | null;
+  adminData: AdminData | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   isLoading: boolean;
   isInitializing: boolean;
   error: string | null;
@@ -27,13 +38,16 @@ interface AuthState {
     name: string,
     password: string
   ) => Promise<void>;
+  adminLogin: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
 
 const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  adminData: null,
   isAuthenticated: false,
+  isAdmin: false,
   isLoading: false,
   isInitializing: true,
   error: null,
@@ -43,11 +57,18 @@ const useAuthStore = create<AuthState>((set) => ({
     try {
       const accessToken = await tokenStorage.getAccessToken();
       if (accessToken) {
-        set({ isAuthenticated: true });
+        const isAdmin = await SecureStore.getItemAsync(ADMIN_KEY);
+        const adminDataStr = await SecureStore.getItemAsync(ADMIN_DATA_KEY);
+        const adminData = adminDataStr ? JSON.parse(adminDataStr) : null;
+        set({
+          isAuthenticated: true,
+          isAdmin: isAdmin === "true",
+          adminData,
+        });
       }
     } catch {
       await tokenStorage.clearTokens();
-      set({ isAuthenticated: false });
+      set({ isAuthenticated: false, isAdmin: false });
     } finally {
       set({ isInitializing: false });
     }
@@ -65,6 +86,7 @@ const useAuthStore = create<AuthState>((set) => ({
       set({
         user: result.user,
         isAuthenticated: true,
+        isAdmin: false,
         isLoading: false,
       });
       router.replace("/(app)/dashboard");
@@ -77,7 +99,7 @@ const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  // ── Login ──────────────────────────────────────────────────────
+  // ── User Login ─────────────────────────────────────────────────
   loginWithPassword: async (phoneNumber, password) => {
     set({ isLoading: true, error: null });
     try {
@@ -86,22 +108,49 @@ const useAuthStore = create<AuthState>((set) => ({
         result.tokens.accessToken,
         result.tokens.refreshToken
       );
+      await SecureStore.setItemAsync(ADMIN_KEY, "false");
       set({
         user: result.user,
         isAuthenticated: true,
+        isAdmin: false,
         isLoading: false,
       });
       router.replace("/(app)/dashboard");
-      await tokenStorage.setTokens(
-        result.tokens.accessToken,
-        result.tokens.refreshToken
-      );
-      console.log("ACCES TOKEN:", result.tokens.accessToken);
     } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
           : "Login failed. Please try again.";
+      set({ error: message, isLoading: false });
+    }
+  },
+
+  // ── Admin Login ────────────────────────────────────────────────
+  adminLogin: async (username, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await authApi.adminLogin({ username, password });
+      await tokenStorage.setTokens(
+        result.tokens.accessToken,
+        result.tokens.refreshToken
+      );
+      await SecureStore.setItemAsync(ADMIN_KEY, "true");
+      await SecureStore.setItemAsync(
+        ADMIN_DATA_KEY,
+        JSON.stringify(result.admin)
+      );
+      set({
+        adminData: result.admin,
+        isAuthenticated: true,
+        isAdmin: true,
+        isLoading: false,
+      });
+      router.replace("/(app)/dashboard");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Admin login failed. Please try again.";
       set({ error: message, isLoading: false });
     }
   },
@@ -115,13 +164,17 @@ const useAuthStore = create<AuthState>((set) => ({
         await authApi.logout(refreshToken);
       }
     } catch {
-      // Continue with local logout even if server call fails
+      // Continue with local logout
     } finally {
       await tokenStorage.clearTokens();
+      await SecureStore.deleteItemAsync(ADMIN_KEY);
+      await SecureStore.deleteItemAsync(ADMIN_DATA_KEY);
       useWalletStore.getState().reset();
       set({
         user: null,
+        adminData: null,
         isAuthenticated: false,
+        isAdmin: false,
         isLoading: false,
         error: null,
       });

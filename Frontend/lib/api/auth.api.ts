@@ -12,6 +12,11 @@ export interface LoginPayload {
   password: string;
 }
 
+export interface AdminLoginPayload {
+  username: string;
+  password: string;
+}
+
 export interface FirebaseAuthPayload {
   idToken: string;
 }
@@ -28,6 +33,20 @@ export interface AuthResponse {
     refreshToken: string;
   };
 }
+
+export interface AdminAuthResponse {
+  admin: {
+    id: string;
+    username: string;
+    email: string;
+    role: string;
+  };
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
 
 export const authApi = {
   register: async (payload: RegisterPayload): Promise<AuthResponse> => {
@@ -47,5 +66,10 @@ export const authApi = {
 
   logout: async (refreshToken: string): Promise<void> => {
     await apiClient.post("/auth/logout", { refreshToken });
+  },
+
+  adminLogin: async (payload: AdminLoginPayload): Promise<AdminAuthResponse> => {
+    const response = await apiClient.post("/admin/login", payload);
+    return response.data.data;
   },
 };

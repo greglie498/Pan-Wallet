@@ -8,6 +8,7 @@ interface WalletState {
   lastFetched: Date | null;
 
   fetchWallets: () => Promise<void>;
+  forceRefresh: () => Promise<void>;
   linkWallet: (provider: "MPESA" | "MTN_MOMO", walletNumber: string) => Promise<void>;
   unlinkWallet: (walletId: string) => Promise<void>;
   clearError: () => void;

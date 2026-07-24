@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import { Text, View } from "react-native";
 import { useAuthStore } from "@/lib/store";
 import { Redirect } from "expo-router";
+import { useTheme } from "@/lib/store/theme.store";
 
 function TabIcon({
   emoji,
@@ -21,7 +22,8 @@ function TabIcon({
 }
 
 export default function AppLayout() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isAdmin } = useAuthStore();
+  const { isDark } = useTheme();
 
   // Guard — redirect to welcome if not authenticated
   if (!isAuthenticated) {
@@ -33,8 +35,8 @@ export default function AppLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#0A1628",
-          borderTopColor: "#1A2F50",
+          backgroundColor: isDark ? "#111827" :"#0A1628",
+          borderTopColor: isDark ? "374151" : "#1A2F50",
           borderTopWidth: 1,
           paddingBottom: 8,
           paddingTop: 8,
@@ -79,6 +81,16 @@ export default function AppLayout() {
           title: "History",
           tabBarIcon: ({ focused }) => (
             <TabIcon emoji="📋" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="admin/index"
+        options={{
+          title: "Admin",
+          href: isAdmin ? undefined : null,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="⚙️" focused={focused} />
           ),
         }}
       />

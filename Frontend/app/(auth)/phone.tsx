@@ -1,5 +1,3 @@
-// app/(auth)/phone.tsx
-
 import React, { useState } from "react";
 import {
   View,
@@ -23,8 +21,7 @@ const COUNTRY_CODES = [
   { code: "+260", flag: "🇿🇲", country: "Zambia" },
   { code: "+221", flag: "🇸🇳", country: "Senegal" },
 ];
-
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "admin";
 
 export default function PhoneScreen() {
   const [mode, setMode] = useState<Mode>("login");
@@ -36,7 +33,7 @@ export default function PhoneScreen() {
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [validationError, setValidationError] = useState("");
 
-  const { loginWithPassword, registerWithPassword, isLoading, error, clearError } =
+  const { loginWithPassword, registerWithPassword, adminLogin,  isLoading, error, clearError } =
     useAuthStore();
 
   const validate = (): boolean => {
@@ -76,6 +73,8 @@ export default function PhoneScreen() {
 
     if (mode === "register") {
       await registerWithPassword(fullNumber, name.trim(), password);
+    } else if (mode === "admin") {
+      await adminLogin(name.trim(), password);
     } else {
       await loginWithPassword(fullNumber, password);
     }
@@ -142,7 +141,23 @@ export default function PhoneScreen() {
                 Register
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              className={`flex-1 py-2 rounded-lg items-center ${
+                mode === "admin" ? "bg-accent" : ""
+              }`}
+              onPress={() => { setMode("admin"); clearError(); setValidationError(""); }}
+            >
+              <Text
+                className={`font-semibold text-sm ${
+                  mode === "admin" ? "text-primary" : "text-gray-400"
+                }`}
+              >
+                Admin
+              </Text>
+            </TouchableOpacity>
+            
           </View>
+
 
           <View className="px-6 flex-1">
             {/* Name field — register only */}
@@ -232,6 +247,17 @@ export default function PhoneScreen() {
               />
             )}
 
+            {/* Admin username field */}
+            {mode === "admin" && (
+              <Input
+                label = "Username"
+                placeholder = "Admin username"
+                value = {name}
+                onChangeText={setName}
+                autoCapitalize="none"
+              />
+            )};
+
             {/* Error */}
             {(validationError || error) && (
               <View className="bg-red-900/30 border border-red-700 rounded-xl p-3 mb-4">
@@ -242,7 +268,11 @@ export default function PhoneScreen() {
             )}
 
             <Button
-              title={mode === "login" ? "Sign In" : "Create Account"}
+              title={
+                mode === "login" ? "Sign In" :
+                mode === "admin" ? "Admin Sign In" :
+                "Create Account"
+              }
               variant="primary"
               size="lg"
               loading={isLoading}
