@@ -49,9 +49,11 @@ class TransactionRepository {
     async updateStatus(
         id: string,
         status: string,
-        failureReason?: string
+        failureReason?: string,
+        tx?: Prisma.TransactionClient
     ): Promise <Transaction> {
-        return prisma.transaction.update({
+        const client = tx ?? prisma;
+        return client.transaction.update({
              where: { id },
             data: {
                 status: status as Prisma.EnumTransactionStatusFieldUpdateOperationsInput["set"],
@@ -60,6 +62,23 @@ class TransactionRepository {
         });
     }
 
+    async updateStatusIfPending(
+        id: string,
+        status: string,
+        failureReason?: string,
+        tx?: Prisma.TransactionClient
+    ): Promise<boolean> {
+        const client = tx ?? prisma;
+        const result = await client.transaction.updateMany({
+            where: { id, status: "PENDING" },
+            data: {
+                status: status as Prisma.EnumTransactionStatusFieldUpdateOperationsInput["set"],
+                ...(failureReason ? { failureReason } : {}),
+            },
+        });
+        return result.count === 1;
+    }
+    
     async updateProviderReference (
         id: string,
         providerReferenceId: string

@@ -1,5 +1,3 @@
-// src/infrastructure/providers/mtn-momo.provider.ts
-
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { env } from "../../config/env";
@@ -171,6 +169,19 @@ class MtnMomoProvider {
         "Failed to authenticate with MTN MoMo Disbursement."
       );
     }
+  }
+
+  parseCallback(body:any) {
+      const { referenceId, status } = body as {
+        referenceId: string;
+        status: string;
+      };
+
+      return {
+        referenceId,
+        status,
+        success: status === "SUCCESSFUL",
+      };
   }
 
   private normalizePhone(phone: string): string {

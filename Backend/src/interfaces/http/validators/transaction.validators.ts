@@ -31,7 +31,6 @@ export const initiateTransferSchema = z.object({
         .positive("Amount must be greater than zero.")
         .max(1000000, "Amount exceeds maximum transfer limit."),
     description: z.string().max(100).optional(),
-    callbackUrl: z.string().url().optional(),
 });
 
 export const listTransactionsSchema = z.object({

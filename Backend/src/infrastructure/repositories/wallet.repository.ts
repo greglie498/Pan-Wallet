@@ -70,6 +70,19 @@ class WalletRepository {
         });
     }
 
+    async deductIfSufficient(
+        id: string,
+        amount: Prisma.Decimal,
+        tx?: Prisma.TransactionClient
+    ): Promise<boolean> {
+        const client = tx ?? prisma;
+        const result = await client.wallet.updateMany({
+            where: { id, balance: { gte: amount }, status: "ACTIVE" },
+            data: { balance: { decrement: amount } },
+        });
+        return result.count === 1;
+    }
+    
     async delete(id: string): Promise<void>{
         await prisma.wallet.delete({ where: { id } });
     }

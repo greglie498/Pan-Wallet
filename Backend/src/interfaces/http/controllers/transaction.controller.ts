@@ -3,11 +3,15 @@ import { transactionService } from "../../../application/transactions/transactio
 import { mpesaProvider } from "../../../infrastructure/providers/mpesa.provider";
 import { mtnMomoProvider } from "../../../infrastructure/providers/mtn-momo.provider";
 import { UnauthorizedError } from "../../../domain/error";
+import { env } from "../../../config/env";
 import { asyncHandler } from "../../../shared/async-handler";
 import { sendSuccess } from "../../../shared/http-response";
 import { logger } from "../../../config/logger";
 
 class TransactionController {
+    private hasValidCallbackToken(req: Request): boolean {
+        return req.query["token"] === env.PROVIDER_CALLBACK_TOKEN;
+    }
     getQuote = asyncHandler (async (req: Request, res: Response) => {
         if (!req.user) throw new UnauthorizedError();
 
@@ -38,7 +42,7 @@ class TransactionController {
         if (!req.user) throw new UnauthorizedError();
 
         const transaction = await transactionService.getTransaction(
-            `${req.params["transactionId"]} ?? ""`,
+            req.params["transactionId"] as string,
             req.user.id
         );
 
@@ -72,6 +76,9 @@ class TransactionController {
 
     mpesaCallback = asyncHandler (async (req: Request, res: Response) => {
         try {
+            if (!this.hasValidCallbackToken(req)) {
+                throw new UnauthorizedError("Invalid provider callback token.");
+            }
             const parsed = mpesaProvider.parseCallback(req.body);
 
             await transactionService.handleCallback({
@@ -90,15 +97,19 @@ class TransactionController {
 
     mtnCallback = asyncHandler (async (req: Request, res: Response) => {
         try {
+            if (!this.hasValidCallbackToken(req)) {
+                throw new UnauthorizedError("Invalid provider callback token.");
+            }
             const { referenceId, status } = req.body as {
                 referenceId: string;
                 status: string;
             };
 
+            const parsed =  mtnMomoProvider.parseCallback(req.body);
             await transactionService.handleCallback({
                 providerReferenceId: referenceId,
-                success: status === "SUCCESSFULL",
-                failureReason: status !== "SUCCESSFULL" ? status : undefined,
+                success: parsed.success,
+                failureReason: parsed.success ? undefined : parsed.status,
             });
         } catch (error) {
             logger.error("Error processing MTN callback:", error);

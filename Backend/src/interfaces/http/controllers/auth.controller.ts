@@ -29,6 +29,7 @@ class AuthController {
             refreshToken: req.body.refreshToken,
             userId: req.user?.id,
         });
+        return sendSuccess(res, 200, null, "Logged out successfully.")
     })
 }
 

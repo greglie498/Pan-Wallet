@@ -28,11 +28,6 @@ const PROVIDER_FEES: Record<string, number> = {
     PANWALLET_INTERNAL: 0,
 };
 
-// Placeholder callback URLs for sandbox testing
-const CALLBACK_URLS: Record<string, string> = {
-    MPESA: "https://panwallet.app/api/v1/transactions/mpesa/callback",
-    MTN_MOMO: "https://panwallet.app/api/v1/transactions/mtn/callback",
-};
 
 class TransactionService {
 
@@ -87,13 +82,18 @@ class TransactionService {
         amount: number,
         externalId: string,
         description: string,
-        callbackUrl?: string
     ): Promise<string> {
+        const callbackPath = recipientProvider === "MPESA"
+            ? "/api/v1/transactions/mpesa/callback"
+            : "/api/v1/transactions/mtn/callback";
+        const callbackUrl = new URL(callbackPath, env.BASE_URL);
+        callbackUrl.searchParams.set("token", env.PROVIDER_CALLBACK_TOKEN);
+
         logger.info("Calling provider:", {
             recipientProvider,
             amount,
             recipientNumber,
-            callbackUrl: callbackUrl ?? CALLBACK_URLS[recipientProvider],
+            callbackUrl: callbackUrl.toString(),
         });
 
         switch (recipientProvider) {
@@ -103,7 +103,7 @@ class TransactionService {
                     amount,
                     externalId,
                     description,
-                    `${env.BASE_URL}/api/v1/transactions/mpesa/callback`
+                    callbackUrl.toString()
                 );
                 return response.CheckoutRequestID;
             }
@@ -115,7 +115,7 @@ class TransactionService {
                     externalId,
                     description,
                     description,
-                    callbackUrl ?? CALLBACK_URLS["MTN_MOMO"]
+                    callbackUrl.toString()
                 );
                 return referenceId;
             }
@@ -172,14 +172,14 @@ class TransactionService {
         }
 
         // Step 1b — balance check
-        const requiredAmount = new Prisma.Decimal(input.amount);
+        const fee = PROVIDER_FEES[input.recipientProvider] ?? 0;
+        const requiredAmount = new Prisma.Decimal(input.amount).plus(fee);
         if (senderWallet.balance.lessThan(requiredAmount)) {
             throw new BadRequestError(
                 `Insufficient balance. Available: ${senderWallet.currency} ${senderWallet.balance.toFixed(2)}. Required: ${senderWallet.currency} ${requiredAmount.toFixed(2)}.`
             );
         }
 
-        const fee = PROVIDER_FEES[input.recipientProvider] ?? 0;
         const senderCurrency = senderWallet.currency;
         const recipientCurrency = this.getCurrencyForProvider(input.recipientProvider);
 
@@ -204,6 +204,14 @@ class TransactionService {
 
         // Step 3 — create exchange rate record + PENDING transaction atomically
         const { transaction } = await prisma.$transaction(async (tx) => {
+            const debited = await walletRepository.deductIfSufficient(
+                input.senderWalletId,
+                requiredAmount,
+                tx
+            );
+            if (!debited) {
+                throw new BadRequestError("Insufficient balance for this transfer and its fee.")
+            }
             const savedRate = await exchangeRateRepository.create(
                 {
                     sourceCurrency: senderCurrency,
@@ -239,7 +247,6 @@ class TransactionService {
                 convertedAmount,
                 transaction.id,
                 description,
-                input.callbackUrl
             );
         } catch (error) {
             // In development — auto-complete transaction despite provider callback error
@@ -285,11 +292,15 @@ class TransactionService {
             }
 
             // Production — mark as failed and re-throw
-            await transactionRepository.updateStatus(
-                transaction.id,
-                "FAILED",
-                error instanceof Error ? error.message : "Provider call failed."
-            );
+            await prisma.$transaction(async (tx) => {
+                await transactionRepository.updateStatus(
+                    transaction.id,
+                    "FAILED",
+                    error instanceof Error ? error.message : "Provider call failed.",
+                    tx
+                );
+                await walletRepository.topUp(transaction.senderWalletId, requiredAmount, tx);
+            });
             throw error;
         }
 
@@ -350,18 +361,28 @@ class TransactionService {
             return;
         }
 
-        await transactionRepository.updateStatus(
-            transaction.id,
-            result.success ? "COMPLETED" : "FAILED",
-            result.failureReason
-        );
+       const status = result.success ? "COMPLETED" : "FAILED";
+        const updated = await prisma.$transaction(async (tx) => {
+            const changed = await transactionRepository.updateStatusIfPending(
+                transaction.id,
+                status,
+                result.failureReason,
+                tx
+            );
+            if (!changed || result.success) return changed;
+
+            const refund = new Prisma.Decimal(transaction.amount).plus(transaction.fee);
+            await walletRepository.topUp(transaction.senderWalletId, refund, tx);
+            return changed;
+        });
+
+        if (!updated) return;
 
         logger.info("Transaction status updated via callback.", {
             transactionId: transaction.id,
             status: result.success ? "COMPLETED" : "FAILED",
         });
     }
-
     async getTransaction(
         transactionId: string,
         userId: string
@@ -380,7 +401,6 @@ class TransactionService {
 
         return transaction;
     }
-
     async listTransactions(
         userId: string,
         walletId?: string

@@ -22,6 +22,7 @@ export const envSchema = z.object({
     CORS_ORIGINS: z
         .string()
         .transform((value) => value.split(",").map((s) => s.trim())),
+    PROVIDER_CALLBACK_TOKEN: z.string().min(32),
 
     // Rate Limiting
     RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(90000), // 15 minutes

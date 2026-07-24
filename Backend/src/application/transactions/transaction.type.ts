@@ -4,7 +4,6 @@ export interface InitiateTransferInput {
     recipientNumber: string;
     amount: number;
     description?: string;
-    callbackUrl?: string;
 }
 
 export interface TransferQuote {

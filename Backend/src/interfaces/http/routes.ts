@@ -113,7 +113,7 @@ router.post(
 )
 
 router.delete(
-    "wallets/:walletId/unlink",
+    "/wallets/:walletId/unlink",
     authenticate,
     walletController.unlinkWallet
 );
@@ -130,6 +130,7 @@ router.post(
 router.post(
     "/transactions",
     authenticate,
+    validate(initiateTransferSchema),
     transactionController.initiateTransfer
 );
 

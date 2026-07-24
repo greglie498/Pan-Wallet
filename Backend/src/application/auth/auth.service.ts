@@ -217,13 +217,13 @@ class AuthService {
         const tokenHash = this.hashToken(input.refreshToken);
         const stored = await refreshTokenRepository.findByTokenHash(tokenHash);
 
-        if (!stored || stored.revoked) {
+        if (!stored || stored.revoked || stored.family !== payload.family || stored?.expiresAt <= new Date()) {
             // token reuse detected - revoke entire family
             await refreshTokenRepository.revokeAllByFamily(payload.family);
             throw new UnauthorizedError("Refresh token has been revoked. Please log in again.");
         }
 
-        await refreshTokenRepository.revokeAllByFamily(tokenHash);
+        await refreshTokenRepository.revokeByTokenHash(tokenHash);
 
         const tokens = await this.issueTokens(
             payload.sub,
