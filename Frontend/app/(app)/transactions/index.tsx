@@ -97,15 +97,18 @@ export default function TransactionsScreen() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [error, setError]= useState("");
     type FilterType = "ALL" | "COMPLETED" | "PENDING" | "FAILED";
     const [filter, setFilter] = useState<FilterType>("ALL");
     const loadTransactions = useCallback(async () => {
         setIsLoading(true);
+        setError("");
         try {
             const data = await transactionApi.list();
             setTransactions(data);
         } catch {
             // fail silently
+            setError("Wecoulc not load your transactions. Pull down and try again");
         } finally {
             setIsLoading(false);
         }
@@ -125,6 +128,9 @@ export default function TransactionsScreen() {
     filter === "ALL"
       ? transactions
       : transactions.filter((t) => t.status === filter);
+    const completed = transactions.filter((t) => t.status === "COMPLETED");
+    const pending = transactions.filter((t) => t.status === "PENDING");
+    const totalSent =completed.reduce((total, item) => total + Number(item.amount), 0);
 
   return (
     <SafeAreaView className="flex-1 bg-surface">
@@ -139,6 +145,23 @@ export default function TransactionsScreen() {
           {transactions.length} total transaction
           {transactions.length !== 1 ? "s" : ""}
         </Text>
+      </View>
+
+      <View className="flex-row px-6 py-4 bg-white border-b border-gray-100">
+        <View className="flex-1">
+          <Text className="text-muted text-xs">Completed</Text>
+          <Text className="text-primary font-bold text-lg">{completed.length}</Text>
+        </View>
+        <View className="flex-1 border-1 border-gray-100 pl-4">
+          <Text className="text-muted text-xs">Pending</Text>
+          <Text className="text-primary font-bold text-lg">{pending.length}</Text>
+        </View>
+        <View className="flex-1 border-1 border-gray-100 pl-4">
+          <Text className="text-muted text-xs">Sent</Text>
+          <Text className="text-primary font-bold text-lg" numberOfLines={1}>
+            {totalSent.toLocaleString("en-US", { maximumFractionDigits: 0})}
+          </Text>
+        </View>
       </View>
 
       {/* Filter tabs */}

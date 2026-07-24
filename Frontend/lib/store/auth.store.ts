@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { authApi } from "../api/auth.api";
-import { tokenStorage } from "../api/client";
+import { tokenStorage, setAuthFailureHandler } from "../api/client";
 import { useWalletStore } from "./wallet.store";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 
 const ADMIN_KEY = "panwallet_is_admin";
 const ADMIN_DATA_KEY = "panwallet_admin_data";
+const USER_DATA_KEY="panwallet_user_data";
 
 interface User {
   id: string;
@@ -60,7 +61,10 @@ const useAuthStore = create<AuthState>((set) => ({
         const isAdmin = await SecureStore.getItemAsync(ADMIN_KEY);
         const adminDataStr = await SecureStore.getItemAsync(ADMIN_DATA_KEY);
         const adminData = adminDataStr ? JSON.parse(adminDataStr) : null;
+        const userDataStr = await SecureStore.getItemAsync(USER_DATA_KEY);
+        const user = userDataStr ? JSON.parse(userDataStr) as User : null;
         set({
+          user,
           isAuthenticated: true,
           isAdmin: isAdmin === "true",
           adminData,
@@ -83,6 +87,7 @@ const useAuthStore = create<AuthState>((set) => ({
         result.tokens.accessToken,
         result.tokens.refreshToken
       );
+      await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(result.user));
       set({
         user: result.user,
         isAuthenticated: true,
@@ -108,6 +113,7 @@ const useAuthStore = create<AuthState>((set) => ({
         result.tokens.accessToken,
         result.tokens.refreshToken
       );
+      await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(result.user));
       await SecureStore.setItemAsync(ADMIN_KEY, "false");
       set({
         user: result.user,
@@ -169,6 +175,7 @@ const useAuthStore = create<AuthState>((set) => ({
       await tokenStorage.clearTokens();
       await SecureStore.deleteItemAsync(ADMIN_KEY);
       await SecureStore.deleteItemAsync(ADMIN_DATA_KEY);
+      await SecureStore.deleteItemAsync(USER_DATA_KEY);
       useWalletStore.getState().reset();
       set({
         user: null,
@@ -184,5 +191,18 @@ const useAuthStore = create<AuthState>((set) => ({
 
   clearError: () => set({ error: null }),
 }));
+
+setAuthFailureHandler(() => {
+  useWalletStore.getState().reset();
+  useAuthStore.setState({
+    user: null,
+    adminData: null,
+    isAuthenticated: false,
+    isAdmin: false,
+    isLoading: false,
+    error: "Your session expired. Please sign in again.",
+  });
+  router.replace("/(auth)/welcome");
+})
 
 export { useAuthStore };

@@ -52,6 +52,11 @@ let failedQueue: Array<{
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
 }> = [];
+let authFailureHandler: (() => void) | undefined;
+
+export const setAuthFailureHandler = (handler: () => void) : void => {
+  authFailureHandler = handler;
+}
 
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((promise) => {
@@ -115,7 +120,7 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null);
       await tokenStorage.clearTokens();
-      // Auth store will detect cleared tokens and redirect to login
+      authFailureHandler?.();
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

@@ -251,7 +251,7 @@ function TransactionVolumeChart({
 
 export default function DashboardScreen() {
   const { user, logout } = useAuthStore();
-  const { wallets, isLoading: walletsLoading, fetchWallets } = useWalletStore();
+  const { wallets, isLoading: walletsLoading, fetchWallets, forceRefresh } = useWalletStore();
   const { isDark } = useTheme();
 
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
@@ -296,9 +296,9 @@ export default function DashboardScreen() {
     }
   }, []);
 
-  const loadData = useCallback(async () => {
-    await Promise.all([fetchWallets(), loadTransactions()]);
-  }, [fetchWallets, loadTransactions]);
+  const loadData = useCallback(async (force = false) => {
+    await Promise.all([force ? forceRefresh() : fetchWallets(), loadTransactions()]);
+  }, [fetchWallets, forceRefresh, loadTransactions]);
 
   useEffect(() => {
     loadData();
@@ -306,7 +306,7 @@ export default function DashboardScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData();
+    await loadData(true);
     setRefreshing(false);
   }, [loadData]);
 
