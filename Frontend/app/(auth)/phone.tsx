@@ -256,7 +256,7 @@ export default function PhoneScreen() {
                 onChangeText={setName}
                 autoCapitalize="none"
               />
-            )};
+            )}
 
             {/* Error */}
             {(validationError || error) && (
