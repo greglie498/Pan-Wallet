@@ -42,28 +42,24 @@ export default function ConfirmScreen() {
     setIsLoading(true);
     try {
       const result = await transactionApi.initiateTransfer({
-        senderWalletId: params.senderWalletId ?? "",
-        recipientProvider: params.recipientProvider ?? "",
-        recipientNumber: params.recipientNumber ?? "",
-        amount: parseFloat(params.amount ?? "0"),
-        description: `PanWallet transfer to ${params.recipientNumber}`,
-      });
+      senderWalletId: params.senderWalletId ?? "",
+      recipientProvider: params.recipientProvider ?? "",
+      recipientNumber: params.recipientNumber ?? "",
+      amount: Number(params.amount),
 
-      Alert.alert(
-        "Transfer Initiated! 🎉",
-        result.message,
-        [
-          {
-            text: "View Transaction",
-            onPress: () => {
-              router.replace(
-                `/(app)/transactions/${result.transactionId}`
-              );
-            },
-          },
-        ],
-        { cancelable: false }
-      );
+      quotedExchangeRate: Number(params.exchangeRate),
+      quotedConvertedAmount: Number(params.convertedAmount)
+    });
+
+      router.replace({
+        pathname:"/(app)/transactions/success",
+        params:{
+          transactionId: result.transactionId,
+          amount: params.amount,
+          currency: params.senderCurrency,
+          recipient: params.recipientNumber,
+        }
+      });
     } catch (error: unknown) {
       Alert.alert(
         "Transfer Failed",
@@ -83,16 +79,26 @@ export default function ConfirmScreen() {
 
       <ScrollView className="flex-1">
         {/* Header */}
-        <View className="px-6 pt-4 pb-6 border-b border-gray-100">
+        <View className="bg-primary px-6 pt-5 pb-10">
+
           <TouchableOpacity
             onPress={() => router.back()}
-            className="w-10 h-10 items-center justify-center mb-4"
+            className="w-11 h-11 rounded-full bg-white/10 items-center justify-center mb-6"
           >
-            <Text className="text-primary text-2xl">←</Text>
+            <Text className="text-white text-xl">
+              ←
+            </Text>
           </TouchableOpacity>
-          <Text className="text-primary text-2xl font-bold mb-1">
-            Confirm Transfer
+
+          <Text className="text-slate-400 text-sm">
+            Confirm transfer
           </Text>
+
+          <Text className="text-white text-3xl font-black mt-1">
+            Send Money
+          </Text>
+
+
           <Text className="text-muted text-sm">
             Review the details before sending
           </Text>
@@ -100,27 +106,41 @@ export default function ConfirmScreen() {
 
         <View className="px-6 pt-6">
           {/* Recipient */}
-          <View className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
-            <Text className="text-muted text-xs font-medium mb-3">
-              SENDING TO
-            </Text>
+          <View className="bg-white rounded-3xl p-5 mb-4">
+
+              <Text className="text-slate-400 text-xs uppercase mb-4">
+              Recipient
+              </Text>
+
             <View className="flex-row items-center">
-              <View className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center mr-4">
-                <Text className="text-2xl">{providerEmoji}</Text>
+
+              <View className="w-14 h-14 rounded-2xl bg-slate-100 items-center justify-center">
+
+                <Text className="text-3xl">
+                  {providerEmoji}
+                </Text>
+
               </View>
-              <View>
-                <Text className="text-primary font-bold text-base">
+
+              <View className="ml-4">
+
+                <Text className="text-primary text-lg font-bold">
                   {params.recipientNumber}
                 </Text>
-                <Text className="text-muted text-sm">via {providerLabel}</Text>
+
+                <Text className="text-muted">
+                  via {providerLabel}
+                </Text>
+
               </View>
-            </View>
+          </View>
+
           </View>
 
           {/* Transfer breakdown */}
           <View className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
-            <Text className="text-muted text-xs font-medium mb-4">
-              TRANSFER DETAILS
+            <Text className="text-slate-400 text-xs uppercase mb-5">
+              PAYMENT SUMMARY
             </Text>
 
             <View className="flex-row justify-between mb-3">
@@ -167,32 +187,49 @@ export default function ConfirmScreen() {
           </View>
 
           {/* Recipient gets */}
-          <View className="bg-primary rounded-2xl p-5 mb-6">
-            <Text className="text-gray-400 text-xs mb-1">
-              Recipient gets
-            </Text>
-            <Text className="text-white text-3xl font-bold">
-              {params.recipientCurrency}{" "}
-              {parseFloat(params.convertedAmount ?? "0").toLocaleString(
-                "en-US",
-                { minimumFractionDigits: 2 }
-              )}
-            </Text>
-          </View>
+          <View className="bg-primary rounded-3xl p-6 mb-6 items-center">
+
+
+              <Text className="text-slate-400 text-sm">
+                Recipient receives
+              </Text>
+              <Text className="text-accent text-4xl font-black mt-2">
+
+                {params.recipientCurrency}{" "}
+                {parseFloat(params.convertedAmount ?? "0")
+                  .toLocaleString(
+                    "en-US",
+                    {
+                    minimumFractionDigits:2
+                    }
+                )}
+
+              </Text>
+
+              <Text className="text-slate-400 mt-3">
+
+                1 {params.senderCurrency}
+                {" = "}
+                {parseFloat(params.exchangeRate ?? "0")
+                  .toFixed(4)}
+                {" "}
+                {params.recipientCurrency}
+
+              </Text>
+            </View>
 
           {/* Warning */}
-          <View className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-            <Text className="text-yellow-800 text-xs leading-5">
-              ⚠️ By confirming, you authorise PanWallet to debit{" "}
-              {params.senderCurrency}{" "}
-              {parseFloat(params.totalDeducted ?? "0").toFixed(2)} from your
-              wallet. This action cannot be undone.
+          <View className="bg-accent/10 rounded-2xl p-4 mb-6">
+            <Text className="text-primary text-sm leading-5">
+              🔒 Your transfer is protected by PanWallet security.
+              Review the details carefully before confirming.
             </Text>
+
           </View>
 
           {/* Buttons */}
           <Button
-            title="Confirm & Send"
+            title="Send Money Now"
             variant="primary"
             size="lg"
             loading={isLoading}

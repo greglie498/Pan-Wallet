@@ -23,42 +23,49 @@ export function Input({
   leftIcon,
   rightIcon,
   onRightIconPress,
+  editable = true,
   ...props
 }: InputProps) {
   const [focused, setFocused] = useState(false);
 
-  const borderClass = error
-    ? "border-error"
+  const containerClass = error
+    ? "border-red-500 bg-red-50"
     : focused
-    ? "border-accent"
-    : "border-gray-200";
+    ? "border-accent bg-primary/5"
+    : "border-slate-200 bg-white";
 
   return (
-    <View className="w-full mb-4">
+    <View className="w-full mb-5">
       {label && (
-        <Text className="text-primary font-medium text-sm mb-2">
+        <Text className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
           {label}
         </Text>
       )}
 
       <View
-        className={`flex-row items-center bg-white dark:bg-gray-800 border-2 ${borderClass} rounded-xl px-4 h-14`}
+        className={`flex-row items-center border-2 rounded-2xl px-4 h-14 ${containerClass}`}
       >
-        {leftIcon && (
-          <View className="mr-3">{leftIcon}</View>
-        )}
+        <View
+          className={`mr-3 ${
+            focused ? "opacity-100" : "opacity-60"
+          }`}
+        >
+          {leftIcon}
+        </View>
 
         <TextInput
-          className="flex-1 text-primary dark:text-white text-base"
-          placeholderTextColor={focused ? "#F5A623" : "#94A3B8"}
+          className="flex-1 text-base text-slate-900 dark:text-white"
+          placeholderTextColor="#94A3B8"
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
+          editable={editable}
           {...props}
         />
 
         {rightIcon && (
           <TouchableOpacity
             onPress={onRightIconPress}
+            hitSlop={8}
             className="ml-3"
           >
             {rightIcon}
@@ -66,14 +73,14 @@ export function Input({
         )}
       </View>
 
-      {error && (
-        <Text className="text-error text-xs mt-1 ml-1">
+      {!!error && (
+        <Text className="text-red-500 text-xs mt-2 ml-1">
           {error}
         </Text>
       )}
 
-      {hint && !error && (
-        <Text className="text-muted text-xs mt-1 ml-1">
+      {!error && !!hint && (
+        <Text className="text-slate-500 text-xs mt-2 ml-1">
           {hint}
         </Text>
       )}

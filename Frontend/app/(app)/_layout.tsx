@@ -36,7 +36,7 @@ export default function AppLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: isDark ? "#111827" :"#0A1628",
-          borderTopColor: isDark ? "374151" : "#1A2F50",
+          borderTopColor: isDark ? "#374151" : "#1A2F50",
           borderTopWidth: 1,
           paddingBottom: 8,
           paddingTop: 8,

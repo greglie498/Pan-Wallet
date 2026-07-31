@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from "react-native";
-import { router } from "expo-router";
+import { router, Tabs } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, Badge, Button } from "@/components/ui";
 import { useWalletStore } from "@/lib/store";

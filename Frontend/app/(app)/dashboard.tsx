@@ -16,59 +16,22 @@ import { Card, Button, Badge } from "@/components/ui";
 import { useAuthStore, useWalletStore } from "@/lib/store";
 import { useTheme } from "@/lib/store/theme.store";
 import { transactionApi, Transaction } from "@/lib/api";
+import QuickActions from "@/components/dashboard/QuickActions";
 import { Wallet } from "@/lib/api/wallet.api";
+import RecentTransactions from "@/components/dashboard/RecentTransactions";
+import BalanceCard from "@/components/dashboard/BalanceCard";
+import GreetingHeader from "@/components/dashboard/GreetingHeader";
+import WalletCarousel from "@/components/dashboard/WalletCarousel";
+import WalletCard from "@/components/dashboard/WalletCard";
+import { Feather } from "@expo/vector-icons";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import StatCard from "@/components/dashboard/StatCard";
+import FloatingSendButton from "@/components/dashboard/FloatingSendButton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CHART_WIDTH = SCREEN_WIDTH - 64;
 
 // ── Sub-components ─────────────────────────────────────────────────
-
-function WalletCard({
-  wallet,
-  onPress,
-}: {
-  wallet: Wallet;
-  onPress: () => void;
-}) {
-  const providerInfo = {
-    PANWALLET_INTERNAL: { label: "PanWallet", emoji: "🌍", color: "bg-accent" },
-    MPESA: { label: "M-Pesa", emoji: "📱", color: "bg-green-500" },
-    MTN_MOMO: { label: "MTN MoMo", emoji: "💛", color: "bg-yellow-500" },
-  }[wallet.provider];
-
-  return (
-    <TouchableOpacity onPress={onPress} className="mr-4" style={{ width: 160 }}>
-      <Card variant="elevated" padding="md">
-        {/* Provider badge */}
-        <View
-          className={`w-10 h-10 rounded-xl ${providerInfo?.color} items-center justify-center mb-3`}
-        >
-          <Text className="text-xl">{providerInfo?.emoji}</Text>
-        </View>
-
-        <Text className="text-muted text-xs font-medium mb-1">
-          {providerInfo?.label}
-        </Text>
-
-        <Text className="text-primary text-lg font-bold" numberOfLines={1}>
-          {wallet.currency}{" "}
-          {parseFloat(wallet.balance).toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </Text>
-
-        <View className="mt-2">
-          <Badge
-            label={wallet.status}
-            variant={wallet.status === "ACTIVE" ? "success" : "error"}
-          />
-        </View>
-      </Card>
-    </TouchableOpacity>
-  );
-}
 
 function TransactionItem({ transaction }: { transaction: Transaction }) {
   const statusVariant = {
@@ -78,11 +41,11 @@ function TransactionItem({ transaction }: { transaction: Transaction }) {
     REVERSED: "warning",
   }[transaction.status] as "success" | "error" | "pending" | "warning";
 
-  const providerEmoji = {
-    MPESA: "📱",
-    MTN_MOMO: "💛",
-    PANWALLET_INTERNAL: "🌍",
-  }[transaction.recipientProvider] ?? "💸";
+  const providerIcon = {
+    MPESA: "smartphone",
+    MTN_MOMO: "wifi",
+    PANWALLET_INTERNAL: "globe",
+  }[transaction.recipientProvider] ?? "send";
 
   const formattedDate = new Date(transaction.createdAt).toLocaleDateString(
     "en-US",
@@ -96,7 +59,7 @@ function TransactionItem({ transaction }: { transaction: Transaction }) {
     >
       {/* Provider icon */}
       <View className="w-11 h-11 rounded-full bg-gray-100 items-center justify-center mr-4">
-        <Text className="text-xl">{providerEmoji}</Text>
+        <Text className="text-xl">{providerIcon}</Text>
       </View>
 
       {/* Details */}
@@ -162,8 +125,8 @@ function SpendByProviderChart({
       <PieChart
         data={pieData}
         donut
-        radius={80}
-        innerRadius={55}
+        radius={65}
+        innerRadius={42}
         centerLabelComponent={() => (
           <Text className="text-primary dark:text-white font-bold text-xs text-center">
             By{"\n"}Provider
@@ -229,7 +192,7 @@ function TransactionVolumeChart({
     <BarChart
       data={barData}
       width={CHART_WIDTH - 40}
-      height={120}
+      height={90}
       barWidth={28}
       spacing={12}
       roundedTop
@@ -327,182 +290,97 @@ export default function DashboardScreen() {
         }
       >
         {/* ── Header ──────────────────────────────────────────── */}
-        <View className="bg-primary px-6 pt-4 pb-8">
-          <View className="flex-row justify-between items-center mb-8">
-            <View>
-              <Text className="text-gray-400 text-sm">
-                {getGreeting()},
-              </Text>
-
-              <Text className="text-white text-xl font-bold">
-                {firstName} 👋
-              </Text>
-            </View>
-
-            <View className="flex-row items-center">
-              <ThemeToggle size={40} />
-              <TouchableOpacity
-                className="w-10 h-10 rounded-full bg-primary-light items-center justify-center ml-2"
-                onPress={() => logout()}
-              >
-                <Text className="text-white text-sm">↩</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+      <View className="bg-primary">
+        <GreetingHeader
+          greeting={getGreeting()}
+          firstName={firstName}
+          onLogout={logout}
+        />
+      </View>
 
         {/* Main Content */}
-        <View className="px-6 -mt-12">
+        <View className="bg-primary-card rounded-[32px] shadow-sm">
 
           {/* ── Balance card ───────────────────────────────────── */}
-          <View className="bg-primary-light dark:bg-gray-800 rounded-2xl p-5">
-            <Text className="text-gray-400 text-sm mb-1">Total Balance</Text>
-            <Text className="text-white text-4xl font-bold mb-1">
-              ${totalBalance.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </Text>
-            <Text className="text-gray-400 text-xs mb-4">
-              USD • PanWallet Internal
-            </Text>
-            <View className="flex-row">
-              <TouchableOpacity
-                className="flex-1 bg-accent rounded-xl py-3 items-center mr-2"
-                onPress={() =>
-                  router.push({
-                    pathname: "/(app)/topup",
-                    params: { walletId: internalWallet?.id ?? "" },
-                  } as any)
-                }
-              >
-                <Text className="text-primary font-bold text-sm">
-                  ＋ Top Up
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="flex-1 bg-white/10 rounded-xl py-3 items-center ml-2"
-                onPress={() =>
-                  router.push("/(app)/transactions/quote" as any)
-                }
-              >
-                <Text className="text-white font-bold text-sm">
-                  💸 Send
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <BalanceCard
+                  balance={totalBalance}
+                  currency="USD"
+                  onTopUp={() =>
+                      router.push({
+                          pathname: "/(app)/topup",
+                          params: {
+                              walletId: internalWallet?.id ?? "",
+                          },
+                      } as any)
+                  }
+                  onSend={() =>
+                      router.push("/(app)/transactions/quote")
+                  }
+            />
         </View>
+  
 
         <View className="px-6 -mt-4">
 
           {/* ── Quick stats ────────────────────────────────────── */}
-          <View className="flex-row mb-6 -mx-2">
-            {[
-              {
-                label: "Transactions",
-                value: transactions.length.toString(),
-                emoji: "📊",
-              },
-              {
-                label: "Completed",
-                value: completedCount.toString(),
-                emoji: "✅",
-              },
-              {
-                label: "Total Sent",
-                value: `$${totalSent.toFixed(0)}`,
-                emoji: "💸",
-              },
-            ].map((stat) => (
-              <View key={stat.label} className="flex-1 mx-2">
-                <Card variant="elevated" padding="sm">
-                  <Text className="text-xl mb-1">{stat.emoji}</Text>
-                  <Text className="text-primary dark:text-white font-bold text-lg">
-                    {stat.value}
-                  </Text>
-                  <Text className="text-muted dark:text-gray-400 text-xs">
-                    {stat.label}
-                  </Text>
-                </Card>
-              </View>
-            ))}
+          <View className="flex-row mb-10">
+            <StatCard
+            icon={
+              <Feather
+                name="bar-chart-2" 
+                size={20}
+                color="#F5A623"
+              />
+            }
+              label="Transactions"
+              value={transactions.length.toString()}
+            />
+            <StatCard
+              icon={
+                <Feather
+                  name="check-circle"
+                  size={20}
+                  color="#22C55E"
+                />
+              }
+              label="Completed"
+              value={completedCount.toString()}
+            />
+            <StatCard
+              icon={
+                <Feather
+                  name="send"
+                  size={20}
+                  color="#3B82F6"
+                />
+              }
+              label="Total Sent"
+              value={'$${totalSent.toFixed(0)}'}
+            />                  
           </View>
 
 
           {/* Wallet Section */}
-
-          <View className="mb-6">
-
-            <View className="flex-row justify-between items-center mb-4">
-
-              <Text className="text-primary text-xl font-extrabold">
-                My Wallets
-              </Text>
-
-              <TouchableOpacity
-                onPress={() => router.push("/(app)/wallets")}
-              >
-                <Text className="text-muted text-sm font-medium">
-                  See all
-                </Text>
-              </TouchableOpacity>
-
-            </View>
-
-            {walletsLoading ? (
-              <ActivityIndicator color="#F5A623" />
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{
-                  paddingRight: 16,
-                }}
-              >
-                {wallets.map((wallet) => (
-                  <WalletCard
-                    key={wallet.id}
-                    wallet={wallet}
-                    onPress={() => router.push("/(app)/wallets")}
-                  />
-                ))}
-
-                <TouchableOpacity
-                  style={{ width: 160 }}
-                  className="mr-4"
-                  onPress={() => router.push("/(app)/wallets/link")}
-                >
-                  <Card variant="elevated" padding="md">
-
-                    <View className="items-center justify-center py-5">
-
-                      <View className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 items-center justify-center mb-3">
-
-                        <Text className="text-primary dark:text-white text-2xl font-bold">
-                          +
-                        </Text>
-
-                      </View>
-
-                      <Text className="text-muted dark:text-gray-400 text-sm">
-                        Link Wallet
-                      </Text>
-
-                    </View>
-
-                  </Card>
-                </TouchableOpacity>
-              </ScrollView>
-            )}
-
+          <View className="rounded-[32px]">
+          <WalletCarousel
+            wallets={wallets}
+            loading={walletsLoading}
+          />
+          <QuickActions
+            walletId={internalWallet?.id}
+          />
           </View>
 
           {/* ── Transaction Volume Chart ──────────────────────── */}
-          <View className="mb-6">
+          <View className="mb-10  rounded-[32px]">
             <Card variant="elevated" padding="lg">
+              <Feather
+                name="bar-chart-2"
+                size={20}
+                color="#F5A623"
+              />
               <Text className="text-primary dark:text-white font-bold text-base mb-4">
-                📈 Transaction Volume (7 days)
+                Transaction Activity
               </Text>
               {transactionsLoading ? (
                 <ActivityIndicator color="#F5A623" />
@@ -516,10 +394,15 @@ export default function DashboardScreen() {
           </View>
 
           {/* ── Spend by Provider Chart ───────────────────────── */}
-          <View className="mb-6">
+          <View className="mb-10  rounded-[32px]">
             <Card variant="elevated" padding="lg">
+              <Feather
+                name="bar-chart-2"
+                size={20}
+                color="#F5A623"
+              />
               <Text className="text-primary dark:text-white font-bold text-base mb-4">
-                🍩 Spend by Provider
+                Spending Distribution
               </Text>
               {transactionsLoading ? (
                 <ActivityIndicator color="#F5A623" />
@@ -532,65 +415,15 @@ export default function DashboardScreen() {
             </Card>
           </View>
 
-
-          <View className="h-px bg-gray-100 mb-8" />
-
-            {/* Send Money */}
-
-            <View className="mb-8">
-
-              <Button
-                title="Send Money"
-                variant="primary"
-                size="lg"
-                onPress={() =>
-                  router.push("/(app)/transactions/quote")
-                }
-            />
-
-          </View>
-
-          <View className="flex-row items-center py-4 border-b border-gray-100 dark:border-graay-700" />
+          <View className="flex-row items-center py-4 border-b border-gray-100 dark:border-graay-700  rounded-[32px]" />
           {/* ── Recent transactions ────────────────────────────── */}
-          <View className="mb-8">
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-primary text-xl font-extrabold">
-                Recent Transactions
-              </Text>
-              <TouchableOpacity
-                onPress={() => router.push("/(app)/transactions")}
-              >
-                <Text className="text-muted text-sm font-medium">
-                  See all
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <Card variant="default" padding="md">
-              {transactionsLoading ? (
-                <ActivityIndicator color="#F5A623" className="py-4" />
-              ) : transactions.length === 0 ? (
-                <View className="items-center py-8">
-                  <Text className="text-4xl mb-3">💸</Text>
-                  <Text className="text-primary font-semibold mb-1">
-                    No transactions yet
-                  </Text>
-                  <Text className="text-muted text-sm text-center">
-                    Send money to get started
-                  </Text>
-                </View>
-              ) : (
-                transactions.map((transaction) => (
-                  <TransactionItem
-                    key={transaction.id}
-                    transaction={transaction}
-                  />
-                ))
-              )}
-            </Card>
-          </View>
+          <RecentTransactions
+            loading={transactionsLoading}
+            transactions={transactions}
+          />
         </View>
       </ScrollView>
+      <FloatingSendButton />
     </SafeAreaView>
   );
 }

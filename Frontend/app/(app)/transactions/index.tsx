@@ -152,11 +152,11 @@ export default function TransactionsScreen() {
           <Text className="text-muted text-xs">Completed</Text>
           <Text className="text-primary font-bold text-lg">{completed.length}</Text>
         </View>
-        <View className="flex-1 border-1 border-gray-100 pl-4">
+        <View className="flex-1 border-l border-gray-100 pl-4">
           <Text className="text-muted text-xs">Pending</Text>
           <Text className="text-primary font-bold text-lg">{pending.length}</Text>
         </View>
-        <View className="flex-1 border-1 border-gray-100 pl-4">
+        <View className="flex-1 border-l border-gray-100 pl-4">
           <Text className="text-muted text-xs">Sent</Text>
           <Text className="text-primary font-bold text-lg" numberOfLines={1}>
             {totalSent.toLocaleString("en-US", { maximumFractionDigits: 0})}

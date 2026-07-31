@@ -21,7 +21,6 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const { initialize, isInitializing } = useAuthStore();
   const { isDark, initialize: initTheme } = useTheme();
-
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,

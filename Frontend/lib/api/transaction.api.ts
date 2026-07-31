@@ -1,9 +1,15 @@
 import { apiClient } from "./client";
+import { extractData } from "./utils";
+
+export type Provider =
+  | "MPESA"
+  | "MTN_MOMO"
+  | "PANWALLET_INTERNAL";
 
 export interface TransferQuote {
   senderWalletId: string;
   senderCurrency: string;
-  recipientProvider: string;
+  recipientProvider: Provider;
   recipientNumber: string;
   amount: number;
   convertedAmount: number;
@@ -16,7 +22,7 @@ export interface TransferQuote {
 export interface Transaction {
   id: string;
   senderWalletId: string;
-  recipientProvider: string;
+  recipientProvider: Provider;
   recipientNumber: string;
   amount: string;
   fee: string;
@@ -34,7 +40,7 @@ export interface Transaction {
 
 export interface QuotePayload {
   senderWalletId: string;
-  recipientProvider: string;
+  recipientProvider: Provider;
   amount: number;
 }
 
@@ -43,7 +49,9 @@ export interface TransferPayload {
   recipientProvider: string;
   recipientNumber: string;
   amount: number;
-  description?: string;
+
+  quotedExchangeRate?: number;
+  quotedConvertedAmount?: number;
 }
 
 export interface TransferResult {
@@ -58,24 +66,24 @@ export const transactionApi = {
   getQuote: async (payload: QuotePayload): Promise<TransferQuote> => {
     console.log("Quote payload:", JSON.stringify(payload));
     const response = await apiClient.post("/transactions/quote", payload);
-    return response.data.data;
+    return extractData<TransferQuote>(response);
   },
 
   initiateTransfer: async (
     payload: TransferPayload
   ): Promise<TransferResult> => {
     const response = await apiClient.post("/transactions", payload);
-    return response.data.data;
+    return extractData<TransferResult>(response);
   },
 
   list: async (walletId?: string): Promise<Transaction[]> => {
     const params = walletId ? { walletId } : {};
     const response = await apiClient.get("/transactions", { params });
-    return response.data.data;
+    return extractData<Transaction[]>(response);
   },
 
   getById: async (transactionId: string): Promise<Transaction> => {
     const response = await apiClient.get(`/transactions/${transactionId}`);
-    return response.data.data;
+    return extractData<Transaction>(response);
   },
 };

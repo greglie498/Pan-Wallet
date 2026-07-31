@@ -1,89 +1,147 @@
 import React from "react";
 import {
+  StatusBar,
   View,
   Text,
   Image,
-  StatusBar,
-  Dimensions,
 } from "react-native";
-import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { Button } from "@/components/ui";
 
-const { height } = Dimensions.get("window");
+const features = [
+  {
+    icon: "zap",
+    title: "Instant Transfers",
+    description: "Move money between African mobile money networks.",
+  },
+  {
+    icon: "globe",
+    title: "Pan-African",
+    description: "Connect M-Pesa, MTN MoMo, Airtel Money and more.",
+  },
+  {
+    icon: "shield",
+    title: "Secure",
+    description: "Protected authentication and encrypted transactions.",
+  },
+];
 
 export default function WelcomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-primary">
-      <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#0A1628"
+      />
 
-      {/* Hero section */}
-      <View
-        className="items-center justify-center px-8"
-        style={{ height: height * 0.55 }}
-      >
-        {/* Logo placeholder — replace with actual logo asset */}
-        <View className="w-24 h-24 rounded-3xl bg-accent items-center justify-center mb-8">
-          <Text className="text-primary text-4xl font-bold">P</Text>
-        </View>
+      <View className="flex-1 px-6 justify-between py-8">
 
-        <Text className="text-white text-4xl font-bold text-center mb-3">
-          PanWallet
-        </Text>
+        {/* Hero */}
 
-        <Text className="text-accent text-base text-center mb-4">
-          Pan-African Mobile Money
-        </Text>
+        <View className="items-center mt-6">
 
-        <Text className="text-gray-400 text-sm text-center leading-6">
-          Send money across M-Pesa and MTN MoMo{"\n"}
-          instantly, with live exchange rates.
-        </Text>
-      </View>
-
-      {/* Feature highlights */}
-      <View className="px-8 mb-8">
-        {[
-          { icon: "🌍", text: "Cross-network transfers" },
-          { icon: "⚡", text: "Real-time exchange rates" },
-          { icon: "🔒", text: "Bank-level security" },
-        ].map((feature) => (
-          <View
-            key={feature.text}
-            className="flex-row items-center mb-4"
-          >
-            <View className="w-10 h-10 rounded-full bg-primary-light items-center justify-center mr-4">
-              <Text className="text-lg">{feature.icon}</Text>
-            </View>
-            <Text className="text-gray-300 text-sm font-medium">
-              {feature.text}
-            </Text>
-          </View>
-        ))}
-      </View>
-
-      {/* CTA buttons */}
-      <View className="px-8 pb-8">
-        <Button
-          title="Get Started"
-          variant="primary"
-          size="lg"
-          onPress={() => router.push("/(auth)/phone")}
-        />
-
-        <View className="mt-4">
-          <Button
-            title="I already have an account"
-            variant="ghost"
-            size="md"
-            onPress={() => router.push("/(auth)/phone")}
+          <Image
+            source={require("@/assets/images/panwallet-logo.png")}
+            className="w-44 h-44 mb-6"
+            resizeMode="contain"
           />
+
+          <Text className="text-accent uppercase tracking-[4px] text-sm font-bold">
+            ONE WALLET. EVERY NETWORK.
+          </Text>
+
+          <Text className="text-white text-5xl font-black text-center mt-3">
+            Move Money{"\n"}Across Africa
+          </Text>
+
+          <Text className="text-slate-300 text-center text-base leading-7 mt-5 px-4">
+            Connect M-Pesa, MTN MoMo, Airtel Money and Orange Money through one secure digital wallet.
+          </Text>
+
         </View>
 
-        <Text className="text-gray-500 text-xs text-center mt-6">
-          By continuing, you agree to our Terms of Service{"\n"}
-          and Privacy Policy
-        </Text>
+        {/* Features */}
+
+        <View className="gap-4">
+
+          {features.map((feature) => (
+
+            <View
+              key={feature.title}
+              className="bg-primary-light rounded-3xl px-5 py-5 flex-row items-center"
+            >
+
+              <View className="w-12 h-12 rounded-2xl bg-accent items-center justify-center mr-4">
+
+                <Feather
+                  name={feature.icon as any}
+                  size={22}
+                  color="#0A1628"
+                />
+
+              </View>
+
+              <View className="flex-1">
+
+                <Text className="text-white font-bold text-base">
+                  {feature.title}
+                </Text>
+
+                <Text className="text-slate-400 mt-1 leading-5">
+                  {feature.description}
+                </Text>
+
+              </View>
+
+            </View>
+
+          ))}
+
+        </View>
+
+        {/* CTA */}
+
+        <View>
+
+          <Button
+            title="Create Your Wallet"
+            size="lg"
+            rightIcon={
+              <Feather
+                name="arrow-right"
+                size={18}
+                color="#0A1628"
+              />
+            }
+            onPress={() =>
+              router.push("/(auth)/phone")
+            }
+          />
+
+          <Button
+            title="Sign In"
+            variant="ghost"
+            size="lg"
+            onPress={() =>
+              router.push("/(auth)/phone")
+            }
+          />
+
+          <Text className="text-center text-slate-500 text-xs mt-6">
+            By continuing you agree to our{" "}
+            <Text className="text-accent">
+              Terms
+            </Text>{" "}
+            and{" "}
+            <Text className="text-accent">
+              Privacy Policy
+            </Text>
+          </Text>
+
+        </View>
+
       </View>
     </SafeAreaView>
   );

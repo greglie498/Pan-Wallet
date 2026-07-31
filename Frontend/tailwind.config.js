@@ -13,6 +13,7 @@ module.exports = {
           DEFAULT: "#0A1628",
           light: "#1A2F50",
           dark: "#050D1A",
+          card: "#132238",
         },
         accent: {
           DEFAULT: "#F5A623",
@@ -25,6 +26,9 @@ module.exports = {
         surface: "#F8FAFC",
         muted: "#94A3B8",
       },
+      borderRadius: {
+        '3xl' : '24px',
+      }
     },
   },
   plugins: [],

@@ -14,6 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Input } from "@/components/ui";
 import { useWalletStore } from "@/lib/store";
 import { transactionApi, TransferQuote } from "@/lib/api";
+import { getApiError } from "@/lib/api/error";
+import { Feather } from "@expo/vector-icons";
 
 type Provider = "MPESA" | "MTN_MOMO";
 
@@ -86,7 +88,7 @@ export default function QuoteScreen() {
       setQuote(result);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Failed to get quote."
+        getApiError(err)
       );
     } finally {
       setIsLoadingQuote(false);
@@ -125,26 +127,35 @@ export default function QuoteScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Header */}
-          <View className="px-6 pt-4 pb-6 border-b border-gray-100">
+          <View className="bg-primary px-6 pt-5 pb-8">
+
             <TouchableOpacity
-              onPress={() => router.back()}
-              className="w-10 h-10 items-center justify-center mb-4"
+                onPress={() => router.back()}
+                className="w-11 h-11 rounded-full bg-primary-light items-center justify-center mb-6"
             >
-              <Text className="text-primary text-2xl">←</Text>
+                <Text className="text-white text-xl">←</Text>
             </TouchableOpacity>
-            <Text className="text-primary text-2xl font-bold mb-1">
-              Send Money
+
+            <Text className="text-slate-400">
+                Send Money
             </Text>
-            <Text className="text-muted text-sm">
-              Available:{" "}
-              <Text className="text-primary font-semibold">
-                {internalWallet?.currency ?? "USD"}{" "}
-                {parseFloat(internalWallet?.balance ?? "0").toLocaleString(
-                  "en-US",
-                  { minimumFractionDigits: 2 }
-                )}
-              </Text>
+
+            <Text className="text-white text-3xl font-black mt-1">
+                New Transfer
             </Text>
+
+            <Text className="text-slate-400 mt-2">
+                Available Balance
+            </Text>
+
+            <Text className="text-accent text-2xl font-bold mt-1">
+                {internalWallet?.currency}
+                {" "}
+                {Number(
+                    internalWallet?.balance ?? 0
+                ).toLocaleString()}
+            </Text>
+
           </View>
 
           <View className="px-6 pt-6 flex-1">
@@ -222,17 +233,6 @@ export default function QuoteScreen() {
               </View>
             ) : null}
 
-            {/* Get Quote button */}
-            {!quote && (
-              <Button
-                title="Get Quote"
-                variant="secondary"
-                size="lg"
-                loading={isLoadingQuote}
-                onPress={handleGetQuote}
-              />
-            )}
-
             {/* Quote result */}
             {isLoadingQuote && (
               <View className="items-center py-8">
@@ -246,60 +246,56 @@ export default function QuoteScreen() {
             {quote && !isLoadingQuote && (
               <View className="mt-2">
                 {/* Quote breakdown */}
-                <View className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
-                  <Text className="text-primary font-bold text-base mb-4">
+                <View className="bg-white rounded-2xl border border-gray-100 p-5 mb-4 items-center">
+                  <Text className="text-primary font-bold text-base mb-4 self-start">
                     Transfer Summary
                   </Text>
 
-                  <View className="flex-row justify-between mb-3">
-                    <Text className="text-muted text-sm">You send</Text>
-                    <Text className="text-primary font-semibold">
-                      {quote.senderCurrency}{" "}
+                  <Text className="text-muted text-xs uppercase tracking-wide mb-1">You send</Text>
+                    <Text className="text-primary font-bold text-xl mb-2">
+                      {quote.senderCurrency}
                       {quote.amount.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                       })}
                     </Text>
-                  </View>
 
-                  <View className="flex-row justify-between mb-3">
-                    <Text className="text-muted text-sm">Exchange rate</Text>
-                    <Text className="text-primary font-semibold">
-                      1 {quote.senderCurrency} ={" "}
-                      {quote.exchangeRate.toFixed(4)} {quote.recipientCurrency}
-                    </Text>
-                  </View>
+                    <Feather
+                      name="arrow-down"
+                      size={16}
+                      color="#94A3B8"
+                      className="my-2"
+                    />
 
-                  <View className="flex-row justify-between mb-3">
-                    <Text className="text-muted text-sm">Fee</Text>
-                    <Text className="text-primary font-semibold">
-                      {quote.senderCurrency}{" "}
-                      {quote.fee.toLocaleString("en-US", {
+                    <Text className="text-muted text-xs uppercase tracking-wide mb-1">Recipient Gets</Text>
+                    <Text className="text-primary font-bold text-2xl mb-4 ">
+                      {quote.recipientCurrency}
+                      {quote.amount.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                       })}
                     </Text>
+                    
+                <View className="w-full h-px bg-gray-100 my-3">
+                  <View className="w-full flex-row justify-between py-1">
+                    <Text className="text-muted text-sm">Exchange rate</Text>
+                    <Text className="text-primary font-semibold text-sm">
+                      1 {quote.senderCurrency} = {quote.exchangeRate.toFixed(2)} {quote.recipientCurrency}
+                    </Text>
                   </View>
 
-                  <View className="h-px bg-gray-100 my-3" />
+                  <View className="w-full flex-row justify-between py-1">
+                    <Text className="text-muted text-sm">Fee</Text>
+                    <Text className="text-primary font-semibold text-sm">
+                      {quote.fee.toFixed(2)} {quote.senderCurrency}
+                    </Text>
+                  </View>
+                </View>
+
+                  <View className="w-full h-px bg-gray-100 my-3" />
 
                   <View className="flex-row justify-between mb-3">
                     <Text className="text-muted text-sm">Total deducted</Text>
                     <Text className="text-primary font-bold">
-                      {quote.senderCurrency}{" "}
-                      {quote.totalDeducted.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </Text>
-                  </View>
-
-                  <View className="bg-accent/10 rounded-xl p-4">
-                    <Text className="text-muted text-xs mb-1">
-                      Recipient gets
-                    </Text>
-                    <Text className="text-primary text-2xl font-bold">
-                      {quote.recipientCurrency}{" "}
-                      {quote.convertedAmount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                      })}
+                      {(quote.amount + quote.fee).toFixed(2)} {quote.senderCurrency}
                     </Text>
                   </View>
                 </View>
@@ -316,7 +312,7 @@ export default function QuoteScreen() {
                   />
                   <View className="flex-1 ml-2">
                     <Button
-                      title="Continue"
+                      title="Review Transfer →"
                       variant="primary"
                       size="md"
                       onPress={handleContinue}
