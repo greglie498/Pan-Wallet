@@ -45,7 +45,8 @@ class TransactionService {
     private async buildQuote(
         senderWalletId: string,
         recipientProvider: string,
-        amount: number
+        amount: number,
+        recipientNumber:string
     ): Promise<TransferQuote> {
         const senderWallet = await walletRepository.findById(senderWalletId);
         if (!senderWallet) throw new NotFoundError("Sender wallet");
