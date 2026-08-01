@@ -274,156 +274,165 @@ export default function DashboardScreen() {
   }, [loadData]);
 
   return (
-    <SafeAreaView className="flex-1 bg-surface dark:bg-gray-900">
-      <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
-
-      <ScrollView
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#F5A623"
-            colors={["#F5A623"]}
-          />
-        }
-      >
-        {/* ── Header ──────────────────────────────────────────── */}
-      <View className="bg-primary">
-        <GreetingHeader
-          greeting={getGreeting()}
-          firstName={firstName}
-          onLogout={logout}
-        />
+    <SafeAreaView
+      className="flex-1 bg-white"
+      edges={["top", "left", "right", "bottom"]}
+    >
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#0A1628"
+      />
+      <View className="flex-1">
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: 180, // space above bottom tabs
+          }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#F5A623"
+              colors={["#F5A623"]}
+            />
+          }
+        >
+          {/* Header */}
+          <View className="bg-primary">
+            <GreetingHeader
+              greeting={getGreeting()}
+              firstName={firstName}
+              onLogout={logout}
+            />
+          </View>
+          {/* Balance */}
+          <View className="bg-primary-card rounded-t-[32px] -mt-6 shadow-sm pt-6">
+            <BalanceCard
+              balance={totalBalance}
+              currency="USD"
+              onTopUp={() =>
+                router.push({
+                  pathname: "/(app)/topup",
+                  params: {
+                    walletId: internalWallet?.id ?? "",
+                  },
+                } as any)
+              }
+              onSend={() =>
+                router.push("/(app)/transactions/quote")
+              }
+            />
+          </View>
+          <View className="px-6 -mt-4">
+            {/* Stats */}
+            <View className="flex-row mb-10">
+              <StatCard
+                icon={
+                  <Feather
+                    name="bar-chart-2"
+                    size={20}
+                    color="#F5A623"
+                  />
+                }
+                label="Transactions"
+                value={transactions.length.toString()}
+              />
+              <StatCard
+                icon={
+                  <Feather
+                    name="check-circle"
+                    size={20}
+                    color="#22C55E"
+                  />
+                }
+                label="Completed"
+                value={completedCount.toString()}
+              />
+              <StatCard
+                icon={
+                  <Feather
+                    name="send"
+                    size={20}
+                    color="#3B82F6"
+                  />
+                }
+                label="Total Sent"
+                value={`$${totalSent.toFixed(0)}`}
+              />
+            </View>
+            {/* Wallets */}
+            <View className="rounded-[32px]">
+              <WalletCarousel
+                wallets={wallets}
+                loading={walletsLoading}
+              />
+              <QuickActions
+                walletId={internalWallet?.id}
+              />
+            </View>
+            {/* Transaction Chart */}
+            <View className="mb-10 rounded-[32px]">
+              <Card
+                variant="elevated"
+                padding="lg"
+              >
+                <Feather
+                  name="bar-chart-2"
+                  size={20}
+                  color="#F5A623"
+                />
+                <Text className="text-primary dark:text-white font-bold text-base mb-4">
+                  Transaction Activity
+                </Text>
+                {
+                  transactionsLoading ? (
+                    <ActivityIndicator color="#F5A623"/>
+                  ) : (
+                    <TransactionVolumeChart
+                      transactions={transactions}
+                      isDark={isDark}
+                    />
+                  )
+                }
+              </Card>
+            </View>
+            {/* Provider Chart */}
+            <View className="mb-10 rounded-[32px]">
+              <Card
+                variant="elevated"
+                padding="lg"
+              >
+                <Feather
+                  name="bar-chart-2"
+                  size={20}
+                  color="#F5A623"
+                />
+                <Text className="text-primary dark:text-white font-bold text-base mb-4">
+                  Spending Distribution
+                </Text>
+                {
+                  transactionsLoading ? (
+                    <ActivityIndicator color="#F5A623"/>
+                  ) : (
+                    <SpendByProviderChart
+                      transactions={transactions}
+                      isDark={isDark}
+                    />
+                  )
+                }
+              </Card>
+            </View>
+            {/* Recent Transactions */}
+            <RecentTransactions
+              loading={transactionsLoading}
+              transactions={transactions}
+            />
+          </View>
+        </ScrollView>
+        {/* Floating button stays above everything */}
+        <FloatingSendButton />
       </View>
-
-        {/* Main Content */}
-        <View className="bg-primary-card rounded-[32px] shadow-sm">
-
-          {/* ── Balance card ───────────────────────────────────── */}
-          <BalanceCard
-                  balance={totalBalance}
-                  currency="USD"
-                  onTopUp={() =>
-                      router.push({
-                          pathname: "/(app)/topup",
-                          params: {
-                              walletId: internalWallet?.id ?? "",
-                          },
-                      } as any)
-                  }
-                  onSend={() =>
-                      router.push("/(app)/transactions/quote")
-                  }
-            />
-        </View>
-  
-
-        <View className="px-6 -mt-4">
-
-          {/* ── Quick stats ────────────────────────────────────── */}
-          <View className="flex-row mb-10">
-            <StatCard
-            icon={
-              <Feather
-                name="bar-chart-2" 
-                size={20}
-                color="#F5A623"
-              />
-            }
-              label="Transactions"
-              value={transactions.length.toString()}
-            />
-            <StatCard
-              icon={
-                <Feather
-                  name="check-circle"
-                  size={20}
-                  color="#22C55E"
-                />
-              }
-              label="Completed"
-              value={completedCount.toString()}
-            />
-            <StatCard
-              icon={
-                <Feather
-                  name="send"
-                  size={20}
-                  color="#3B82F6"
-                />
-              }
-              label="Total Sent"
-              value={'$${totalSent.toFixed(0)}'}
-            />                  
-          </View>
-
-
-          {/* Wallet Section */}
-          <View className="rounded-[32px]">
-          <WalletCarousel
-            wallets={wallets}
-            loading={walletsLoading}
-          />
-          <QuickActions
-            walletId={internalWallet?.id}
-          />
-          </View>
-
-          {/* ── Transaction Volume Chart ──────────────────────── */}
-          <View className="mb-10  rounded-[32px]">
-            <Card variant="elevated" padding="lg">
-              <Feather
-                name="bar-chart-2"
-                size={20}
-                color="#F5A623"
-              />
-              <Text className="text-primary dark:text-white font-bold text-base mb-4">
-                Transaction Activity
-              </Text>
-              {transactionsLoading ? (
-                <ActivityIndicator color="#F5A623" />
-              ) : (
-                <TransactionVolumeChart
-                  transactions={transactions}
-                  isDark={isDark}
-                />
-              )}
-            </Card>
-          </View>
-
-          {/* ── Spend by Provider Chart ───────────────────────── */}
-          <View className="mb-10  rounded-[32px]">
-            <Card variant="elevated" padding="lg">
-              <Feather
-                name="bar-chart-2"
-                size={20}
-                color="#F5A623"
-              />
-              <Text className="text-primary dark:text-white font-bold text-base mb-4">
-                Spending Distribution
-              </Text>
-              {transactionsLoading ? (
-                <ActivityIndicator color="#F5A623" />
-              ) : (
-                <SpendByProviderChart
-                  transactions={transactions}
-                  isDark={isDark}
-                />
-              )}
-            </Card>
-          </View>
-
-          <View className="flex-row items-center py-4 border-b border-gray-100 dark:border-graay-700  rounded-[32px]" />
-          {/* ── Recent transactions ────────────────────────────── */}
-          <RecentTransactions
-            loading={transactionsLoading}
-            transactions={transactions}
-          />
-        </View>
-      </ScrollView>
-      <FloatingSendButton />
     </SafeAreaView>
-  );
+);
 }

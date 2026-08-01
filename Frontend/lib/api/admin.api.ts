@@ -58,7 +58,7 @@ export const adminApi = {
     getUsers: async (
         page = 1,
         limit = 20
-    ): Promise<{ users: AdminUser[]; total: Number; pages: number}> => {
+    ): Promise<{ users: AdminUser[]; total: number; pages: number}> => {
         const response = await apiClient.get("/admin/users", {
             params: { page, limit },
         });
@@ -70,8 +70,8 @@ export const adminApi = {
         limit = 20
     ): Promise<{
         transactions: AdminTransaction[];
-        total: Number;
-        pages: Number;
+        total: number;
+        pages: number;
     }> => {
         const response = await apiClient.get("/admin/transactions", {
             params: { page, limit },

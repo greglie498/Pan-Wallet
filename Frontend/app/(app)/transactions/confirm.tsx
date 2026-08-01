@@ -10,6 +10,7 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui";
+import { normalizePhoneNumber } from "@/lib/utils/phone";
 import { transactionApi } from "@/lib/api";
 
 export default function ConfirmScreen() {
@@ -41,6 +42,17 @@ export default function ConfirmScreen() {
   const handleConfirm = async () => {
     setIsLoading(true);
     try {
+      console.log("CONFIRM PARAMS:", params);
+
+      console.log("TRANSFER BODY:", {
+        senderWalletId: params.senderWalletId,
+        recipientProvider: params.recipientProvider,
+        recipientNumber: normalizePhoneNumber(
+          params.recipientNumber ?? ""
+        ),
+        amount: Number(params.amount),
+      });
+    
       const result = await transactionApi.initiateTransfer({
       senderWalletId: params.senderWalletId ?? "",
       recipientProvider: params.recipientProvider ?? "",
@@ -60,16 +72,18 @@ export default function ConfirmScreen() {
           recipient: params.recipientNumber,
         }
       });
-    } catch (error: unknown) {
+    } catch (error: any) {
+      console.log(
+        "TRANSFER FAILED RESPONSE:",
+        error.response?.data
+      );
+
       Alert.alert(
         "Transfer Failed",
-        error instanceof Error
-          ? error.message
-          : "Something went wrong. Please try again.",
+        error.response?.data?.message ??
+          "Something went wrong. Please try again.",
         [{ text: "OK" }]
       );
-    } finally {
-      setIsLoading(false);
     }
   };
 

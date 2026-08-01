@@ -24,7 +24,7 @@ export const initiateTransferSchema = z.object({
         .string()
         .min(10, "recipient number must be at least 10 characters.")
         .max(15, "Recipient number must not exceed 15 characters.")
-        .regex(/^\+?[1-9]\d{9,14}$/, "Invalid recipient phone number format")
+        
         .trim(),
     amount: z.coerce
         .number()

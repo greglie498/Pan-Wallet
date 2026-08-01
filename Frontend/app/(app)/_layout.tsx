@@ -1,62 +1,67 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { Text, View } from "react-native";
+import { View, ColorValue } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/lib/store";
-import { Redirect } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/lib/store/theme.store";
 
 function TabIcon({
-  emoji,
-  focused,
+  name,
+  color,
 }: {
-  emoji: string;
-  focused: boolean;
+  name: keyof typeof Feather.glyphMap;
+  color: ColorValue;
 }) {
   return (
-    <View className="items-center justify-center">
-      <Text className={`text-xl ${focused ? "opacity-100" : "opacity-40"}`}>
-        {emoji}
-      </Text>
-    </View>
+    <Feather
+      name={name}
+      size={24}
+      color={color}
+    />
   );
 }
 
 export default function AppLayout() {
-  const { isAuthenticated, isAdmin } = useAuthStore();
+  const insets = useSafeAreaInsets();
+
+  console.log("APP TAB LAYOUT LOADED");
+  const { user, adminData } = useAuthStore();
+  const isAdmin = !!adminData;
   const { isDark } = useTheme();
 
   // Guard — redirect to welcome if not authenticated
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/welcome" />;
-  }
+  //if (!isAuthenticated) {
+  //  return <Redirect href="/(auth)/welcome" />;
+  //}
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarActiveTintColor: "#F5A623",
+        tabBarInactiveTintColor: isDark? "#94A3B8": "#64748B",
         tabBarStyle: {
-          backgroundColor: isDark ? "#111827" :"#0A1628",
+          backgroundColor: isDark ? "#111827" : "#0A1628",
           borderTopColor: isDark ? "#374151" : "#1A2F50",
           borderTopWidth: 1,
-          paddingBottom: 8,
+          height: 65 + (insets.bottom > 0 ? insets.bottom : 10),
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
           paddingTop: 8,
-          height: 65,
         },
-        tabBarActiveTintColor: "#F5A623",
-        tabBarInactiveTintColor: "#94A3B8",
         tabBarLabelStyle: {
           fontSize: 11,
           fontFamily: "Inter_500Medium",
-          marginTop: 2,
         },
       }}
     >
+      
       <Tabs.Screen
         name="dashboard"
         options={{
           title: "Home",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🏠" focused={focused} />
+          tabBarIcon: ({ color }) => (
+            <TabIcon name="home" color={color} />
           ),
         }}
       />
@@ -67,55 +72,31 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="wallets/index"
+        name="wallets"
         options={{
           title: "Wallets",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="💳" focused={focused} />
+          tabBarIcon: ({ color }) => (
+            <TabIcon name= "credit-card" color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="transactions/index"
+        name="transactions"
         options={{
           title: "History",
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="📋" focused={focused} />
+          tabBarIcon: ({ color }) => (
+            <TabIcon name="clock" color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="admin/index"
+        name="admin"
         options={{
           title: "Admin",
           href: isAdmin ? undefined : null,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="⚙️" focused={focused} />
+          tabBarIcon: ({ color }) => (
+            <TabIcon name="settings" color={color} />
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="wallets/link"
-        options={{
-          href: null, // Hide from tab bar — accessed via button
-        }}
-      />
-      <Tabs.Screen
-        name="transactions/quote"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="transactions/confirm"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="transactions/[id]"
-        options={{
-          href: null,
         }}
       />
     </Tabs>

@@ -23,7 +23,7 @@ import {
 
 // Fixed fee per provider in source currency
 const PROVIDER_FEES: Record<string, number> = {
-    MPESA: 25,
+    MPESA: 5,
     MTN_MOMO: 1,
     PANWALLET_INTERNAL: 0,
 };
@@ -134,7 +134,8 @@ class TransactionService {
         senderWalletId: string,
         recipientProvider: string,
         amount: number,
-        userId: string
+        userId: string,
+        recipientNumber: string
     ): Promise<TransferQuote> {
         const senderWallet = await walletRepository.findById(senderWalletId);
 
@@ -150,7 +151,7 @@ class TransactionService {
             throw new BadRequestError("Transfer amount must be greater than zero.");
         }
 
-        return this.buildQuote(senderWalletId, recipientProvider, amount);
+        return this.buildQuote(senderWalletId, recipientProvider, amount, recipientNumber);
     }
 
     async initiateTransfer(

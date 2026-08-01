@@ -23,14 +23,14 @@ const PROVIDERS = [
   {
     id: "MPESA" as Provider,
     label: "M-Pesa",
-    emoji: "📱",
+    icon: "smarthphone",
     color: "bg-green-500",
     borderColor: "border-green-500",
   },
   {
     id: "MTN_MOMO" as Provider,
     label: "MTN MoMo",
-    emoji: "💛",
+    icon: "yellow-circle",
     color: "bg-yellow-500",
     borderColor: "border-yellow-500",
   },
@@ -50,42 +50,48 @@ export default function QuoteScreen() {
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [error, setError] = useState("");
-
+  const phoneRegex = /^(?:\+254|254|0)?(7\d{8})$/;
   const validate = (): boolean => {
-    if (!recipientProvider) {
-      setValidationError("Select a provider.");
-      return false;
-    }
-    if (!recipientNumber || recipientNumber.replace(/\D/g, "").length < 10) {
-      setValidationError("Enter a valid recipient number.");
-      return false;
-    }
-    const amt = parseFloat(amount);
-    if (!amount || isNaN(amt) || amt <= 0) {
-      setValidationError("Enter a valid amount.");
-      return false;
-    }
-    if (!internalWallet) {
-      setValidationError("No wallet found.");
-      return false;
-    }
+
+  if (!recipientProvider) {
+    setValidationError("Select a provider.");
+    return false;
+  }
+
+  const cleanedNumber = recipientNumber.replace(/\s+/g, "");
+
+  if (!phoneRegex.test(cleanedNumber)) {
+    setValidationError("Enter a valid Kenyan phone number.");
+    return false;
+  }
+
+  const amt = parseFloat(amount);
+
+  if (!amount || isNaN(amt) || amt <= 0) {
+    setValidationError("Enter a valid amount.");
+    return false;
+  }
+
+  if (!internalWallet) {
+    setValidationError("No wallet found.");
+    return false;
+  }
     setValidationError("");
     return true;
   };
-
   const handleGetQuote = useCallback(async () => {
     setError("");
     if (!validate() || !internalWallet || !recipientProvider) return;
-
     setIsLoadingQuote(true);
     setQuote(null);
     try {
       const result = await transactionApi.getQuote({
-        senderWalletId: internalWallet.id,
-        recipientProvider,
-        amount: parseFloat(amount),
-      });
-      setQuote(result);
+      senderWalletId: internalWallet.id,
+      recipientProvider,
+      recipientNumber,
+      amount: parseFloat(amount),
+    }); 
+    setQuote(result);
     } catch (err: unknown) {
       setError(
         getApiError(err)
@@ -93,7 +99,8 @@ export default function QuoteScreen() {
     } finally {
       setIsLoadingQuote(false);
     }
-  }, [recipientProvider, amount, internalWallet]);
+
+  }, [recipientProvider, recipientNumber, amount, internalWallet]);
 
   const handleContinue = () => {
     if (!quote || !recipientProvider) return;
@@ -151,9 +158,11 @@ export default function QuoteScreen() {
             <Text className="text-accent text-2xl font-bold mt-1">
                 {internalWallet?.currency}
                 {" "}
-                {Number(
-                    internalWallet?.balance ?? 0
-                ).toLocaleString()}
+                {
+                  Number(internalWallet?.balance ?? 0).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                  })
+                }
             </Text>
 
           </View>
@@ -169,11 +178,18 @@ export default function QuoteScreen() {
                 return (
                   <TouchableOpacity
                     key={provider.id}
-                    className={`flex-1 flex-row items-center p-3 rounded-xl border-2 mr-2 ${
+                    className={`flex-1 flex-row items-center p-4 rounded-2xl border-2 mr-2 ${
                       isSelected
                         ? provider.borderColor + " bg-white"
                         : "border-gray-100 bg-white"
                     }`}
+                    {
+                      ...isSelected && (
+                          <Text className="text-green-600 font-bold ml-auto">
+                            ✓
+                          </Text>
+                      )
+                    }
                     onPress={() => {
                       setRecipientProvider(provider.id);
                       setQuote(null);
@@ -183,7 +199,7 @@ export default function QuoteScreen() {
                     <View
                       className={`w-8 h-8 rounded-lg ${provider.color} items-center justify-center mr-2`}
                     >
-                      <Text className="text-base">{provider.emoji}</Text>
+                      <Text className="text-base">{provider.icon}</Text>
                     </View>
                     <Text className="text-primary font-semibold text-sm">
                       {provider.label}
@@ -196,7 +212,7 @@ export default function QuoteScreen() {
             {/* Recipient number */}
             <Input
               label="Recipient Number"
-              placeholder="+254 7XX XXX XXX"
+              placeholder="07XX XXX XXX"
               keyboardType="phone-pad"
               value={recipientNumber}
               onChangeText={(text) => {
@@ -205,6 +221,12 @@ export default function QuoteScreen() {
                 setValidationError("");
               }}
             />
+            {
+            validationError.includes("phone") && (
+              <Text className="text-red-500 text-xs mt-1 mb-3">
+                {validationError}
+              </Text>
+            )}
 
             {/* Amount */}
             <Input
@@ -218,6 +240,23 @@ export default function QuoteScreen() {
                 setValidationError("");
               }}
             />
+            {
+            validationError.includes("phone") && (
+              <Text className="text-red-500 text-xs mt-1 mb-3">
+                {validationError}
+              </Text>
+            )}
+
+            {/* Get Quote Button */}
+            <View className="mt-6">
+              <Button
+                title="Get Quote"
+                variant="primary"
+                size="lg"
+                loading={isLoadingQuote}
+                onPress={handleGetQuote}
+              />
+            </View>
 
             {/* Validation error */}
             {validationError ? (
@@ -267,9 +306,9 @@ export default function QuoteScreen() {
                     />
 
                     <Text className="text-muted text-xs uppercase tracking-wide mb-1">Recipient Gets</Text>
-                    <Text className="text-primary font-bold text-2xl mb-4 ">
+                    <Text className="text-primary font-bold text-2xl mb-4">
                       {quote.recipientCurrency}
-                      {quote.amount.toLocaleString("en-US", {
+                      {quote.convertedAmount.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                       })}
                     </Text>
@@ -295,7 +334,7 @@ export default function QuoteScreen() {
                   <View className="flex-row justify-between mb-3">
                     <Text className="text-muted text-sm">Total deducted</Text>
                     <Text className="text-primary font-bold">
-                      {(quote.amount + quote.fee).toFixed(2)} {quote.senderCurrency}
+                      {(quote.totalDeducted).toFixed(2)} {quote.senderCurrency}
                     </Text>
                   </View>
                 </View>

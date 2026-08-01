@@ -15,13 +15,14 @@ class TransactionController {
     getQuote = asyncHandler (async (req: Request, res: Response) => {
         if (!req.user) throw new UnauthorizedError();
 
-        const { senderWalletId, recipientProvider, amount } = req.body;
+        const { senderWalletId, recipientProvider, recipientNumber, amount } = req.body;
 
         const quote = await transactionService.getQuote(
             senderWalletId,
             recipientProvider,
             Number(amount),
-            req.user.id
+            req.user.id,
+            recipientNumber
         );
 
         return sendSuccess(res, 200, quote, "Quote retrieved successfully.");

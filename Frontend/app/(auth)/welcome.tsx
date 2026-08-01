@@ -4,6 +4,7 @@ import {
   View,
   Text,
   Image,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -31,118 +32,119 @@ const features = [
 export default function WelcomeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-primary">
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor="#0A1628"
-      />
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="#0A1628"
+        />
 
-      <View className="flex-1 px-6 justify-between py-8">
+        <View className="flex-1 px-6 justify-between py-8">
 
-        {/* Hero */}
+          {/* Hero */}
 
-        <View className="items-center mt-6">
+          <View className="items-center mt-6">
 
-          <Image
-            source={require("@/assets/images/panwallet-logo.png")}
-            className="w-44 h-44 mb-6"
-            resizeMode="contain"
-          />
+            <Image
+              source={require("@/assets/images/panwallet-logo.png")}
+              className="w-44 h-44 mb-6"
+              resizeMode="contain"
+            />
 
-          <Text className="text-accent uppercase tracking-[4px] text-sm font-bold">
-            ONE WALLET. EVERY NETWORK.
-          </Text>
+            <Text className="text-accent uppercase tracking-[4px] text-sm font-bold">
+              ONE WALLET. EVERY NETWORK.
+            </Text>
 
-          <Text className="text-white text-5xl font-black text-center mt-3">
-            Move Money{"\n"}Across Africa
-          </Text>
+            <Text className="text-white text-5xl font-black text-center mt-3">
+              Move Money{"\n"}Across Africa
+            </Text>
 
-          <Text className="text-slate-300 text-center text-base leading-7 mt-5 px-4">
-            Connect M-Pesa, MTN MoMo, Airtel Money and Orange Money through one secure digital wallet.
-          </Text>
+            <Text className="text-slate-300 text-center text-base leading-7 mt-5 px-4">
+              Connect M-Pesa, MTN MoMo, Airtel Money and Orange Money through one secure digital wallet.
+            </Text>
 
-        </View>
+          </View>
 
-        {/* Features */}
+          {/* Features */}
 
-        <View className="gap-4">
+          <View className="gap-4">
 
-          {features.map((feature) => (
+            {features.map((feature) => (
 
-            <View
-              key={feature.title}
-              className="bg-primary-light rounded-3xl px-5 py-5 flex-row items-center"
-            >
+              <View
+                key={feature.title}
+                className="bg-primary-light rounded-3xl px-5 py-5 flex-row items-center"
+              >
 
-              <View className="w-12 h-12 rounded-2xl bg-accent items-center justify-center mr-4">
+                <View className="w-12 h-12 rounded-2xl bg-accent items-center justify-center mr-4">
 
+                  <Feather
+                    name={feature.icon as any}
+                    size={22}
+                    color="#0A1628"
+                  />
+
+                </View>
+
+                <View className="flex-1">
+
+                  <Text className="text-white font-bold text-base">
+                    {feature.title}
+                  </Text>
+
+                  <Text className="text-slate-400 mt-1 leading-5">
+                    {feature.description}
+                  </Text>
+
+                </View>
+
+              </View>
+
+            ))}
+
+          </View>
+
+          {/* CTA */}
+
+          <View>
+
+            <Button
+              title="Create Your Wallet"
+              size="lg"
+              rightIcon={
                 <Feather
-                  name={feature.icon as any}
-                  size={22}
+                  name="arrow-right"
+                  size={18}
                   color="#0A1628"
                 />
+              }
+              onPress={() =>
+                router.push("/(auth)/phone")
+              }
+            />
 
-              </View>
+            <Button
+              title="Sign In"
+              variant="ghost"
+              size="lg"
+              onPress={() =>
+                router.push("/(auth)/phone")
+              }
+            />
 
-              <View className="flex-1">
-
-                <Text className="text-white font-bold text-base">
-                  {feature.title}
-                </Text>
-
-                <Text className="text-slate-400 mt-1 leading-5">
-                  {feature.description}
-                </Text>
-
-              </View>
-
-            </View>
-
-          ))}
-
-        </View>
-
-        {/* CTA */}
-
-        <View>
-
-          <Button
-            title="Create Your Wallet"
-            size="lg"
-            rightIcon={
-              <Feather
-                name="arrow-right"
-                size={18}
-                color="#0A1628"
-              />
-            }
-            onPress={() =>
-              router.push("/(auth)/phone")
-            }
-          />
-
-          <Button
-            title="Sign In"
-            variant="ghost"
-            size="lg"
-            onPress={() =>
-              router.push("/(auth)/phone")
-            }
-          />
-
-          <Text className="text-center text-slate-500 text-xs mt-6">
-            By continuing you agree to our{" "}
-            <Text className="text-accent">
-              Terms
-            </Text>{" "}
-            and{" "}
-            <Text className="text-accent">
-              Privacy Policy
+            <Text className="text-center text-slate-500 text-xs mt-6">
+              By continuing you agree to our{" "}
+              <Text className="text-accent">
+                Terms
+              </Text>{" "}
+              and{" "}
+              <Text className="text-accent">
+                Privacy Policy
+              </Text>
             </Text>
-          </Text>
 
+          </View>
         </View>
-
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

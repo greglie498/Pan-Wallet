@@ -41,6 +41,7 @@ export interface Transaction {
 export interface QuotePayload {
   senderWalletId: string;
   recipientProvider: Provider;
+  recipientNumber: string;
   amount: number;
 }
 
