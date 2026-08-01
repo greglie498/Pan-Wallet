@@ -1,0 +1,17 @@
+node_modules
+dist
+build
+coverage
+
+.env
+.env.*
+
+npm-debug.log*
+
+.prisma/client
+
+.vscode
+.idea
+
+.DS_Store
+Thumbs.db
