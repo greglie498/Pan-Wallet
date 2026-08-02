@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules
+
+# Expo
+.expo
+.expo-shared
+
+# Build outputs
+dist
+build
+web-build
+
+# Android build outputs only
+android/.gradle
+android/build
+android/app/build
+
+# IDE
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
