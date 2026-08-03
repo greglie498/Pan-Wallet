@@ -84,7 +84,10 @@ export default function RegisterScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-primary">
-            <KeyboardAvoidingView>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "android" ? "height" : "padding"}
+            >
                 <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
         
                 <ScrollView
@@ -100,7 +103,6 @@ export default function RegisterScreen() {
                         className="w-24 h-24 self-center mb-6"
                         resizeMode="contain"
                     />
-
                     <Text className="text-white text-3xl font-bold text-center">
                         Create Your Wallet
                     </Text>
@@ -114,7 +116,6 @@ export default function RegisterScreen() {
                 <View className="px-6">
                         <View>
                             {/* Name field — register only */}
-                            {mode === "register" && (
                             <Input
                                 label="Full Name"
                                 placeholder="Jane Wanjiru"
@@ -122,8 +123,9 @@ export default function RegisterScreen() {
                                 onChangeText={setName}
                                 autoCapitalize="words"
                             />
-                            )}
-
+                        </View>
+                            
+                        <View > 
                             {/* Phone number */}
                             <PhoneInput
                                 selectedCountry={selectedCode}
@@ -141,9 +143,28 @@ export default function RegisterScreen() {
                                     />
                                 }
                             />
-
+                        </View>
                             {/* Password */}
                             <Input
+                                label="Password"
+                                placeholder="Min. 8 characters"
+                                secureTextEntry={!showPassword}
+                                value={password}
+                                onChangeText={setPassword}
+                                rightIcon={
+                                    <Feather
+                                        name={showPassword ? "eye-off" : "eye"}
+                                        size={20}
+                                        color="#94A3B8"
+                                    />
+                                }
+                                onRightIconPress={() =>
+                                    setShowPassword(!showPassword)
+                                }
+                            />
+                        
+                            {/* Confirm password — register only */}
+                             <Input
                                 label="Confirm Password"
                                 secureTextEntry={!showConfirmPassword}
                                 value={confirmPassword}
@@ -166,18 +187,8 @@ export default function RegisterScreen() {
                                     />
                                 }
                             />
-
-                            {/* Confirm password — register only */}
-                            {mode === "register" && (
-                            <Input
-                                label="Confirm Password"
-                                placeholder="Re-enter password"
-                                secureTextEntry
-                                value={confirmPassword}
-                                onChangeText={setConfirmPassword}
-                            />
-                            )}
                         </View>
+                            
                     
                     {/* Error */}
                     {(validationError || error) && (
@@ -206,7 +217,6 @@ export default function RegisterScreen() {
                         action="Sign In"
                         onPress={() => router.replace("/(auth)/login")}
                     />
-                </View>
                 </ScrollView>
         </KeyboardAvoidingView>
         </SafeAreaView>

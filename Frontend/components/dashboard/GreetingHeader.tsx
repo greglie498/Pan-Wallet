@@ -15,45 +15,30 @@ export default function GreetingHeader({
   onLogout,
 }: GreetingHeaderProps) {
   return (
-    <View className="bg-primary px-6 pt-4 pb-10 rounded-b-[32px]">
-
-      <View className="flex-row justify-between items-center">
-
-        <View>
-
-          <Text className="text-slate-400 text-sm">
-            {greeting}
-          </Text>
-
-          <Text className="text-white text-3xl font-bold mt-1">
-            {firstName}
-          </Text>
-
-          <Text className="text-accent mt-2 tracking-[2px] text-xs">
-            PAN-AFRICAN WALLET
-          </Text>
-
-        </View>
-
-        <View className="flex-row">
-
-          <ThemeToggle size={42} />
-
-          <TouchableOpacity
-            onPress={onLogout}
-            className="ml-3 w-11 h-11 rounded-full bg-primary-light items-center justify-center"
-          >
-            <Feather
-              name="log-out"
-              size={20}
-              color="white"
-            />
-          </TouchableOpacity>
-
-        </View>
-
+    <View className="flex-row justify-between items-center py-2">
+      <View>
+        <Text className="text-slate-300 text-xs font-medium uppercase tracking-wider">
+          {greeting}
+        </Text>
+        <Text className="text-white text-2xl font-bold mt-0.5">
+          {firstName}
+        </Text>
+        <Text className="text-accent mt-1 tracking-[2px] text-[10px] font-bold">
+          PAN-AFRICAN WALLET
+        </Text>
       </View>
 
+      <View className="flex-row items-center">
+        <ThemeToggle size={38} />
+        
+        <TouchableOpacity
+          onPress={onLogout}
+          activeOpacity={0.8}
+          className="ml-3 w-[38px] h-[38px] rounded-full bg-white/10 border border-white/15 items-center justify-center active:bg-white/20"
+        >
+          <Feather name="log-out" size={18} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

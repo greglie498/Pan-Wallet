@@ -5,6 +5,7 @@ import {
   Text,
   Image,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -104,9 +105,7 @@ export default function WelcomeScreen() {
           </View>
 
           {/* CTA */}
-
-          <View>
-
+          <View className="mt-8">
             <Button
               title="Create Your Wallet"
               size="lg"
@@ -118,7 +117,7 @@ export default function WelcomeScreen() {
                 />
               }
               onPress={() =>
-                router.push("/(auth)/phone")
+                router.push("/(auth)/register")
               }
             />
 
@@ -127,9 +126,23 @@ export default function WelcomeScreen() {
               variant="ghost"
               size="lg"
               onPress={() =>
-                router.push("/(auth)/phone")
+                router.push("/(auth)/login")
               }
             />
+
+            <TouchableOpacity
+              className="mt-4 items-center"
+              onPress={() =>
+                router.push("/(auth)/admin-login")
+              }
+            >
+              <Text className="text-slate-400 text-sm">
+                Are you an administrator?{" "}
+                <Text className="text-accent font-semibold">
+                  Admin Sign In
+                </Text>
+              </Text>
+            </TouchableOpacity>
 
             <Text className="text-center text-slate-500 text-xs mt-6">
               By continuing you agree to our{" "}

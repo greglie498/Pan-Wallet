@@ -69,7 +69,10 @@ export default function LoginScreen() {
 
     return (
     <SafeAreaView className="flex-1 bg-primary">
-        <KeyboardAvoidingView>
+        <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "android" ? "height" : "padding"}       
+        >
       <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
     
         <ScrollView

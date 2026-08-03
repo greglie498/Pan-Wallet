@@ -1,61 +1,41 @@
 import React from "react";
-import {
-  View,
-  Text,
-} from "react-native";
+import { View, Text } from "react-native";
 import { router } from "expo-router";
-import {
-  Feather,
-  MaterialCommunityIcons,
-} from "@expo/vector-icons";
-
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "@/lib/store/theme.store";
 import QuickAction from "./QuickAction";
 
 interface Props {
   walletId?: string;
 }
 
-export default function QuickActions({
-  walletId,
-}: Props) {
+export default function QuickActions({ walletId }: Props) {
+  const { isDark } = useTheme();
+
   return (
     <View className="mb-8">
-
-      <Text className="text-primary dark:text-white text-xl font-bold mb-5">
+      {/* Explicit style prevents NativeWind dark: class lock */}
+      <Text
+        style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+        className="text-lg font-bold mb-4"
+      >
         Quick Actions
       </Text>
 
       <View className="flex-row justify-between">
-
         <QuickAction
           label="Send"
-          icon={
-            <Feather
-              name="send"
-              size={24}
-              color="#F5A623"
-            />
-          }
-          onPress={() =>
-            router.push("/(app)/transactions/quote")
-          }
+          icon={<Feather name="send" size={22} color="#F5A623" />}
+          onPress={() => router.push("/(app)/transactions/quote")}
         />
 
         <QuickAction
           label="Top Up"
-          icon={
-            <Feather
-              name="plus-circle"
-              size={24}
-              color="#F5A623"
-            />
-          }
+          icon={<Feather name="plus-circle" size={22} color="#F5A623" />}
           onPress={() =>
             router.push({
               pathname: "/(app)/topup",
-              params: {
-                walletId: walletId ?? "",
-              },
+              params: { walletId: walletId ?? "" },
             } as any)
           }
         />
@@ -65,31 +45,19 @@ export default function QuickActions({
           icon={
             <MaterialCommunityIcons
               name="wallet-outline"
-              size={24}
+              size={22}
               color="#F5A623"
             />
           }
-          onPress={() =>
-            router.push("/(app)/wallets")
-          }
+          onPress={() => router.push("/(app)/wallets")}
         />
 
         <QuickAction
           label="History"
-          icon={
-            <Feather
-              name="clock"
-              size={24}
-              color="#F5A623"
-            />
-          }
-          onPress={() =>
-            router.push("/(app)/transactions")
-          }
+          icon={<Feather name="clock" size={22} color="#F5A623" />}
+          onPress={() => router.push("/(app)/transactions")}
         />
-
       </View>
-
     </View>
   );
 }

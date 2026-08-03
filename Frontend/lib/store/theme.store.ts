@@ -41,8 +41,14 @@ const useThemeStore = create<ThemeState>((set, get) => ({
     },
 
     toggle: async () => {
-        const { mode, setMode } = get();
-        const next = mode === "dark" ? "light" : "dark";
+    const { mode } = get();
+
+    const next =
+        mode === "dark"
+            ? "light"
+            : "dark";
+
+    await get().setMode(next);
     },
 }));
 

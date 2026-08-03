@@ -30,10 +30,6 @@ export default function PhoneInput({
 
   return (
     <>
-      {leftIcon && 
-      <View className="mr-2">{leftIcon}</View>
-      }
-
       <Text className="text-gray-300 text-sm font-medium mb-2">
         Country
       </Text>
@@ -104,9 +100,13 @@ export default function PhoneInput({
         value={phoneNumber}
         onChangeText={onPhoneChange}
         leftIcon={
-          <Text className="text-slate-400 font-semibold">
-            {selectedCountry.code}
-          </Text>
+          <View className="flex-row items-center">
+            {leftIcon}
+
+            <Text className="text-slate-400 font-semibold ml-2">
+              {selectedCountry.code}
+            </Text>
+          </View>
         }
         maxLength={10}
       />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,228 +10,206 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card, Badge, Button } from "@/components/ui";
-import { transactionApi, Transaction } from "@/lib/api";
+import { Card, Badge, ThemeToggle } from "@/components/ui";
+import { useTransactionStore } from "@/lib/store";
+import { useTheme } from "@/lib/store/theme.store";
+import { Transaction } from "@/lib/api/transaction.api";
+import { Feather } from "@expo/vector-icons";
 
-function TransactionCard({ transaction }: { transaction: Transaction }) {
-  const statusVariant = {
-    COMPLETED: "success",
-    FAILED: "error",
-    PENDING: "pending",
-    REVERSED: "warning",
-  }[transaction.status] as "success" | "error" | "pending" | "warning";
+function TransactionCard({
+  transaction,
+  onPress,
+}: {
+  transaction: Transaction;
+  onPress: () => void;
+}) {
+  const { isDark } = useTheme();
 
-  const providerInfo = {
-    MPESA: { emoji: "📱", label: "M-Pesa" },
-    MTN_MOMO: { emoji: "💛", label: "MTN MoMo" },
-    PANWALLET_INTERNAL: { emoji: "🌍", label: "PanWallet" },
-  }[transaction.recipientProvider] ?? { emoji: "💸", label: "Unknown" };
+  const isDeposit = transaction.type === "DEPOSIT";
+  const statusVariant =
+    transaction.status === "COMPLETED"
+      ? "success"
+      : transaction.status === "PENDING"
+      ? "warning"
+      : "error";
 
   const formattedDate = new Date(transaction.createdAt).toLocaleDateString(
     "en-US",
     {
       month: "short",
       day: "numeric",
-      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     }
   );
 
   return (
-    <TouchableOpacity
-      onPress={() =>
-        router.push(`/(app)/transactions/${transaction.id}`)
-      }
-      className="mb-3"
-    >
-      <Card variant="default" padding="md">
-        <View className="flex-row items-center">
-          {/* Provider icon */}
-          <View className="w-12 h-12 rounded-full bg-gray-100 items-center justify-center mr-4">
-            <Text className="text-2xl">{providerInfo.emoji}</Text>
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      <Card variant="elevated" padding="md" className="mb-3">
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center flex-1 mr-3">
+            <View
+              style={{
+                backgroundColor: isDeposit
+                  ? isDark
+                    ? "#064E3B"
+                    : "#DCFCE7"
+                  : isDark
+                  ? "#1E293B"
+                  : "#F1F5F9",
+              }}
+              className="w-10 h-10 rounded-full items-center justify-center mr-3"
+            >
+              <Feather
+                name={isDeposit ? "arrow-down-left" : "arrow-up-right"}
+                size={18}
+                color={
+                  isDeposit
+                    ? "#10B981"
+                    : isDark
+                    ? "#94A3B8"
+                    : "#64748B"
+                }
+              />
+            </View>
+
+            <View className="flex-1">
+              <Text
+                style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                className="font-bold text-sm"
+                numberOfLines={1}
+              >
+                {isDeposit
+                  ? "Top Up / Deposit"
+                  : transaction.recipientNumber || "Transfer"}
+              </Text>
+              <Text
+                style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                className="text-xs mt-0.5"
+              >
+                {formattedDate}
+              </Text>
+            </View>
           </View>
 
-          {/* Details */}
-          <View className="flex-1">
-            <Text className="text-primary font-semibold text-sm mb-0.5">
-              To {transaction.recipientNumber}
-            </Text>
-            <Text className="text-muted text-xs mb-1">
-              via {providerInfo.label}
-            </Text>
-            <Text className="text-muted text-xs">{formattedDate}</Text>
-          </View>
-
-          {/* Amount + status */}
           <View className="items-end">
-            <Text className="text-primary font-bold text-base mb-1">
-              -{parseFloat(transaction.amount).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+            <Text
+              style={{
+                color: isDeposit
+                  ? "#10B981"
+                  : isDark
+                  ? "#FFFFFF"
+                  : "#0F172A",
+              }}
+              className="font-bold text-sm mb-1"
+            >
+              {isDeposit ? "+" : "-"}${parseFloat(transaction.amount).toFixed(2)}
             </Text>
-            <Badge
-              label={transaction.status}
-              variant={statusVariant}
-              size="sm"
-            />
+            <Badge label={transaction.status} variant={statusVariant} />
           </View>
         </View>
-
-        {/* Exchange rate info if cross-currency */}
-        {transaction.exchangeRate && (
-          <View className="mt-3 pt-3 border-t border-gray-100 flex-row items-center">
-            <Text className="text-muted text-xs">
-              Rate: 1 {transaction.exchangeRate.sourceCurrency} ={" "}
-              {parseFloat(transaction.exchangeRate.rate).toFixed(4)}{" "}
-              {transaction.exchangeRate.targetCurrency}
-            </Text>
-          </View>
-        )}
       </Card>
     </TouchableOpacity>
   );
 }
 
 export default function TransactionsScreen() {
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [refreshing, setRefreshing] = useState(false);
-    const [error, setError]= useState("");
-    type FilterType = "ALL" | "COMPLETED" | "PENDING" | "FAILED";
-    const [filter, setFilter] = useState<FilterType>("ALL");
-    const loadTransactions = useCallback(async () => {
-        setIsLoading(true);
-        setError("");
-        try {
-            const data = await transactionApi.list();
-            setTransactions(data);
-        } catch {
-            // fail silently
-            setError("Wecoulc not load your transactions. Pull down and try again");
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+  const { isDark } = useTheme();
+  const { transactions, isLoading, fetchTransactions } = useTransactionStore();
+  const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-    loadTransactions();
+  useEffect(() => {
+    fetchTransactions();
   }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadTransactions();
+    await fetchTransactions();
     setRefreshing(false);
   };
 
-  const filtered =
-    filter === "ALL"
-      ? transactions
-      : transactions.filter((t) => t.status === filter);
-    const completed = transactions.filter((t) => t.status === "COMPLETED");
-    const pending = transactions.filter((t) => t.status === "PENDING");
-    const totalSent =completed.reduce((total, item) => total + Number(item.amount), 0);
-
   return (
-    <SafeAreaView className="flex-1 bg-surface">
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+    <SafeAreaView
+      style={{ backgroundColor: isDark ? "#0A1628" : "#F8FAFC" }}
+      className="flex-1"
+    >
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#0A1628" : "#F8FAFC"}
+      />
 
-      {/* Header */}
-      <View className="px-6 py-4 border-b border-gray-100">
-        <Text className="text-primary text-2xl font-bold mb-1">
-          Transactions
-        </Text>
-        <Text className="text-muted text-sm">
-          {transactions.length} total transaction
-          {transactions.length !== 1 ? "s" : ""}
-        </Text>
-      </View>
-
-      <View className="flex-row px-6 py-4 bg-white border-b border-gray-100">
-        <View className="flex-1">
-          <Text className="text-muted text-xs">Completed</Text>
-          <Text className="text-primary font-bold text-lg">{completed.length}</Text>
-        </View>
-        <View className="flex-1 border-l border-gray-100 pl-4">
-          <Text className="text-muted text-xs">Pending</Text>
-          <Text className="text-primary font-bold text-lg">{pending.length}</Text>
-        </View>
-        <View className="flex-1 border-l border-gray-100 pl-4">
-          <Text className="text-muted text-xs">Sent</Text>
-          <Text className="text-primary font-bold text-lg" numberOfLines={1}>
-            {totalSent.toLocaleString("en-US", { maximumFractionDigits: 0})}
+      {/* Header with ThemeToggle */}
+      <View
+        style={{ borderBottomColor: isDark ? "#1E293B" : "#E2E8F0" }}
+        className="px-6 py-4 flex-row items-center justify-between border-b"
+      >
+        <View>
+          <Text
+            style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+            className="text-2xl font-bold"
+          >
+            Transactions
+          </Text>
+          <Text
+            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+            className="text-xs mt-0.5"
+          >
+            {transactions.length} total transaction
+            {transactions.length !== 1 ? "s" : ""}
           </Text>
         </View>
+
+        <ThemeToggle />
       </View>
 
-      {/* Filter tabs */}
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="border-b border-gray-100"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12 }}
-      >
-        {(["ALL", "COMPLETED", "PENDING", "FAILED"] as const).map((f) => (
-          <TouchableOpacity
-            key={f}
-            onPress={() => setFilter(f)}
-            className={`px-4 py-2 rounded-full mr-2 ${
-              filter === f ? "bg-primary" : "bg-gray-100"
-            }`}
-          >
-            <Text
-              className={`text-xs font-semibold ${
-                filter === f ? "text-white" : "text-muted"
-              }`}
-            >
-              {f}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <ScrollView
-        className="flex-1 px-6 pt-4"
+        className="flex-1 px-6 pt-6"
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
             colors={["#F5A623"]}
+            tintColor="#F5A623"
           />
         }
       >
         {isLoading && !refreshing ? (
-          <ActivityIndicator color="#F5A623" className="mt-8" />
-        ) : filtered.length === 0 ? (
+          <ActivityIndicator color="#F5A623" size="large" className="mt-12" />
+        ) : transactions.length === 0 ? (
           <View className="items-center py-16">
-            <Text className="text-5xl mb-4">📋</Text>
-            <Text className="text-primary font-bold text-lg mb-2">
-              {filter === "ALL"
-                ? "No transactions yet"
-                : `No ${filter.toLowerCase()} transactions`}
-            </Text>
-            <Text className="text-muted text-sm text-center mb-8">
-              {filter === "ALL"
-                ? "Send money to see your transaction history here"
-                : `You have no ${filter.toLowerCase()} transactions`}
-            </Text>
-            {filter === "ALL" && (
-              <Button
-                title="Send Money"
-                variant="primary"
-                size="md"
-                fullWidth={false}
-                onPress={() => router.push("/(app)/transactions/quote")}
+            <View
+              style={{ backgroundColor: isDark ? "#1E293B" : "#F1F5F9" }}
+              className="w-16 h-16 rounded-full items-center justify-center mb-4"
+            >
+              <Feather
+                name="clock"
+                size={28}
+                color={isDark ? "#94A3B8" : "#64748B"}
               />
-            )}
+            </View>
+
+            <Text
+              style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+              className="font-bold text-lg mb-1"
+            >
+              No transactions yet
+            </Text>
+
+            <Text
+              style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+              className="text-xs text-center leading-5"
+            >
+              Your transaction history will appear here once you send or receive money.
+            </Text>
           </View>
         ) : (
           <View className="pb-8">
-            {filtered.map((transaction) => (
+            {transactions.map((tx: Transaction) => (
               <TransactionCard
-                key={transaction.id}
-                transaction={transaction}
+                key={tx.id}
+                transaction={tx}
+                onPress={() => router.push(`/(app)/transactions/${tx.id}`)}
               />
             ))}
           </View>

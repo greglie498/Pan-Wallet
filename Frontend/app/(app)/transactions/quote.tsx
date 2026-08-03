@@ -13,9 +13,10 @@ import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, Input } from "@/components/ui";
 import { useWalletStore } from "@/lib/store";
+import { useTheme } from "@/lib/store/theme.store";
 import { transactionApi, TransferQuote } from "@/lib/api";
 import { getApiError } from "@/lib/api/error";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
 type Provider = "MPESA" | "MTN_MOMO";
 
@@ -23,20 +24,21 @@ const PROVIDERS = [
   {
     id: "MPESA" as Provider,
     label: "M-Pesa",
-    icon: "smarthphone",
-    color: "bg-green-500",
-    borderColor: "border-green-500",
+    icon: <MaterialCommunityIcons name="cellphone" size={20} color="#22C55E" />,
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500",
   },
   {
     id: "MTN_MOMO" as Provider,
     label: "MTN MoMo",
-    icon: "yellow-circle",
-    color: "bg-yellow-500",
-    borderColor: "border-yellow-500",
+    icon: <MaterialCommunityIcons name="wallet" size={20} color="#EAB308" />,
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500",
   },
 ];
 
 export default function QuoteScreen() {
+  const { isDark } = useTheme();
   const { wallets } = useWalletStore();
   const internalWallet = wallets.find(
     (w) => w.provider === "PANWALLET_INTERNAL"
@@ -50,35 +52,37 @@ export default function QuoteScreen() {
   const [isLoadingQuote, setIsLoadingQuote] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [error, setError] = useState("");
+  
   const phoneRegex = /^(?:\+254|254|0)?(7\d{8})$/;
+
   const validate = (): boolean => {
+    if (!recipientProvider) {
+      setValidationError("Select a provider.");
+      return false;
+    }
 
-  if (!recipientProvider) {
-    setValidationError("Select a provider.");
-    return false;
-  }
+    const cleanedNumber = recipientNumber.replace(/\s+/g, "");
 
-  const cleanedNumber = recipientNumber.replace(/\s+/g, "");
+    if (!phoneRegex.test(cleanedNumber)) {
+      setValidationError("Enter a valid Kenyan phone number.");
+      return false;
+    }
 
-  if (!phoneRegex.test(cleanedNumber)) {
-    setValidationError("Enter a valid Kenyan phone number.");
-    return false;
-  }
+    const amt = parseFloat(amount);
 
-  const amt = parseFloat(amount);
+    if (!amount || isNaN(amt) || amt <= 0) {
+      setValidationError("Enter a valid amount.");
+      return false;
+    }
 
-  if (!amount || isNaN(amt) || amt <= 0) {
-    setValidationError("Enter a valid amount.");
-    return false;
-  }
-
-  if (!internalWallet) {
-    setValidationError("No wallet found.");
-    return false;
-  }
+    if (!internalWallet) {
+      setValidationError("No wallet found.");
+      return false;
+    }
     setValidationError("");
     return true;
   };
+
   const handleGetQuote = useCallback(async () => {
     setError("");
     if (!validate() || !internalWallet || !recipientProvider) return;
@@ -86,20 +90,17 @@ export default function QuoteScreen() {
     setQuote(null);
     try {
       const result = await transactionApi.getQuote({
-      senderWalletId: internalWallet.id,
-      recipientProvider,
-      recipientNumber,
-      amount: parseFloat(amount),
-    }); 
-    setQuote(result);
+        senderWalletId: internalWallet.id,
+        recipientProvider,
+        recipientNumber,
+        amount: parseFloat(amount),
+      });
+      setQuote(result);
     } catch (err: unknown) {
-      setError(
-        getApiError(err)
-      );
+      setError(getApiError(err));
     } finally {
       setIsLoadingQuote(false);
     }
-
   }, [recipientProvider, recipientNumber, amount, internalWallet]);
 
   const handleContinue = () => {
@@ -122,8 +123,11 @@ export default function QuoteScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+    <SafeAreaView
+      style={{ backgroundColor: isDark ? "#0A1628" : "#F8FAFC" }}
+      className="flex-1"
+    >
+      <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -134,76 +138,93 @@ export default function QuoteScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Header */}
-          <View className="bg-primary px-6 pt-5 pb-8">
-
+          <View className="bg-[#0A1628] px-6 pt-3 pb-8">
             <TouchableOpacity
-                onPress={() => router.back()}
-                className="w-11 h-11 rounded-full bg-primary-light items-center justify-center mb-6"
+              onPress={() => router.back()}
+              className="w-10 h-10 rounded-full bg-white/10 items-center justify-center mb-4"
+              activeOpacity={0.8}
             >
-                <Text className="text-white text-xl">←</Text>
+              <Feather name="arrow-left" size={20} color="#FFFFFF" />
             </TouchableOpacity>
 
-            <Text className="text-slate-400">
-                Send Money
+            <Text className="text-slate-400 text-xs font-semibold uppercase tracking-wider">
+              Send Money
             </Text>
 
-            <Text className="text-white text-3xl font-black mt-1">
-                New Transfer
+            <Text className="text-white text-3xl font-bold mt-0.5">
+              New Transfer
             </Text>
 
-            <Text className="text-slate-400 mt-2">
-                Available Balance
-            </Text>
-
-            <Text className="text-accent text-2xl font-bold mt-1">
-                {internalWallet?.currency}
-                {" "}
-                {
-                  Number(internalWallet?.balance ?? 0).toLocaleString("en-US", {
+            <View className="mt-4 pt-4 border-t border-white/10 flex-row justify-between items-end">
+              <View>
+                <Text className="text-slate-400 text-xs">Available Balance</Text>
+                <Text className="text-[#F5A623] text-2xl font-bold mt-0.5">
+                  {internalWallet?.currency ?? "USD"}{" "}
+                  {Number(internalWallet?.balance ?? 0).toLocaleString("en-US", {
                     minimumFractionDigits: 2,
-                  })
-                }
-            </Text>
-
+                  })}
+                </Text>
+              </View>
+            </View>
           </View>
 
-          <View className="px-6 pt-6 flex-1">
+          {/* Main Body */}
+          <View
+            style={{ backgroundColor: isDark ? "#0F172A" : "#FFFFFF" }}
+            className="px-6 pt-6 flex-1 rounded-t-[28px] -mt-4 shadow-sm"
+          >
             {/* Provider selection */}
-            <Text className="text-primary font-semibold text-sm mb-3">
+            <Text
+              style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+              className="font-bold text-sm mb-3"
+            >
               Send to
             </Text>
+            
             <View className="flex-row mb-6">
               {PROVIDERS.map((provider) => {
                 const isSelected = recipientProvider === provider.id;
                 return (
                   <TouchableOpacity
                     key={provider.id}
-                    className={`flex-1 flex-row items-center p-4 rounded-2xl border-2 mr-2 ${
-                      isSelected
-                        ? provider.borderColor + " bg-white"
-                        : "border-gray-100 bg-white"
-                    }`}
-                    {
-                      ...isSelected && (
-                          <Text className="text-green-600 font-bold ml-auto">
-                            ✓
-                          </Text>
-                      )
-                    }
+                    activeOpacity={0.8}
+                    style={{
+                      backgroundColor: isDark
+                        ? isSelected
+                          ? "rgba(51, 65, 85, 0.8)"
+                          : "rgba(30, 41, 59, 0.5)"
+                        : isSelected
+                        ? "#F8FAFC"
+                        : "#FFFFFF",
+                      borderColor: isSelected
+                        ? "#F5A623"
+                        : isDark
+                        ? "#334155"
+                        : "#E2E8F0",
+                    }}
+                    className="flex-1 flex-row items-center p-3.5 rounded-2xl border-2 mr-2 justify-between"
                     onPress={() => {
                       setRecipientProvider(provider.id);
                       setQuote(null);
                       setError("");
                     }}
                   >
-                    <View
-                      className={`w-8 h-8 rounded-lg ${provider.color} items-center justify-center mr-2`}
-                    >
-                      <Text className="text-base">{provider.icon}</Text>
+                    <View className="flex-row items-center">
+                      <View
+                        className={`w-9 h-9 rounded-xl ${provider.bgColor} items-center justify-center mr-2.5`}
+                      >
+                        {provider.icon}
+                      </View>
+                      <Text
+                        style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                        className="font-semibold text-sm"
+                      >
+                        {provider.label}
+                      </Text>
                     </View>
-                    <Text className="text-primary font-semibold text-sm">
-                      {provider.label}
-                    </Text>
+                    {isSelected && (
+                      <Feather name="check-circle" size={18} color="#F5A623" />
+                    )}
                   </TouchableOpacity>
                 );
               })}
@@ -221,8 +242,7 @@ export default function QuoteScreen() {
                 setValidationError("");
               }}
             />
-            {
-            validationError.includes("phone") && (
+            {validationError.includes("phone") && (
               <Text className="text-red-500 text-xs mt-1 mb-3">
                 {validationError}
               </Text>
@@ -240,15 +260,9 @@ export default function QuoteScreen() {
                 setValidationError("");
               }}
             />
-            {
-            validationError.includes("phone") && (
-              <Text className="text-red-500 text-xs mt-1 mb-3">
-                {validationError}
-              </Text>
-            )}
 
             {/* Get Quote Button */}
-            <View className="mt-6">
+            <View className="mt-6 mb-4">
               <Button
                 title="Get Quote"
                 variant="primary"
@@ -260,82 +274,136 @@ export default function QuoteScreen() {
 
             {/* Validation error */}
             {validationError ? (
-              <View className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
-                <Text className="text-error text-sm">{validationError}</Text>
+              <View className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-4">
+                <Text className="text-red-500 text-sm">{validationError}</Text>
               </View>
             ) : null}
 
             {/* API error */}
             {error ? (
-              <View className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
-                <Text className="text-error text-sm">{error}</Text>
+              <View className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-4">
+                <Text className="text-red-500 text-sm">{error}</Text>
               </View>
             ) : null}
 
-            {/* Quote result */}
+            {/* Loading Indicator */}
             {isLoadingQuote && (
               <View className="items-center py-8">
                 <ActivityIndicator color="#F5A623" />
-                <Text className="text-muted text-sm mt-3">
+                <Text
+                  style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                  className="text-sm mt-3"
+                >
                   Fetching live exchange rate...
                 </Text>
               </View>
             )}
 
+            {/* Quote result */}
             {quote && !isLoadingQuote && (
-              <View className="mt-2">
+              <View className="mt-2 mb-8">
                 {/* Quote breakdown */}
-                <View className="bg-white rounded-2xl border border-gray-100 p-5 mb-4 items-center">
-                  <Text className="text-primary font-bold text-base mb-4 self-start">
+                <View
+                  style={{
+                    backgroundColor: isDark ? "#1E293B" : "#F8FAFC",
+                    borderColor: isDark ? "#334155" : "#E2E8F0",
+                  }}
+                  className="rounded-2xl border p-5 mb-4 items-center"
+                >
+                  <Text
+                    style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                    className="font-bold text-base mb-4 self-start"
+                  >
                     Transfer Summary
                   </Text>
 
-                  <Text className="text-muted text-xs uppercase tracking-wide mb-1">You send</Text>
-                    <Text className="text-primary font-bold text-xl mb-2">
-                      {quote.senderCurrency}
-                      {quote.amount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </Text>
+                  <Text
+                    style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                    className="text-xs uppercase tracking-wide mb-1"
+                  >
+                    You send
+                  </Text>
+                  <Text
+                    style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                    className="font-bold text-xl mb-2"
+                  >
+                    {quote.senderCurrency}{" "}
+                    {quote.amount.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </Text>
 
-                    <Feather
-                      name="arrow-down"
-                      size={16}
-                      color="#94A3B8"
-                      className="my-2"
-                    />
+                  <Feather
+                    name="arrow-down"
+                    size={16}
+                    color="#F5A623"
+                    className="my-2"
+                  />
 
-                    <Text className="text-muted text-xs uppercase tracking-wide mb-1">Recipient Gets</Text>
-                    <Text className="text-primary font-bold text-2xl mb-4">
-                      {quote.recipientCurrency}
-                      {quote.convertedAmount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </Text>
-                    
-                <View className="w-full h-px bg-gray-100 my-3">
-                  <View className="w-full flex-row justify-between py-1">
-                    <Text className="text-muted text-sm">Exchange rate</Text>
-                    <Text className="text-primary font-semibold text-sm">
-                      1 {quote.senderCurrency} = {quote.exchangeRate.toFixed(2)} {quote.recipientCurrency}
-                    </Text>
-                  </View>
+                  <Text
+                    style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                    className="text-xs uppercase tracking-wide mb-1"
+                  >
+                    Recipient Gets
+                  </Text>
+                  <Text className="text-[#F5A623] font-bold text-2xl mb-4">
+                    {quote.recipientCurrency}{" "}
+                    {quote.convertedAmount.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                    })}
+                  </Text>
 
-                  <View className="w-full flex-row justify-between py-1">
-                    <Text className="text-muted text-sm">Fee</Text>
-                    <Text className="text-primary font-semibold text-sm">
-                      {quote.fee.toFixed(2)} {quote.senderCurrency}
-                    </Text>
-                  </View>
-                </View>
+                  <View
+                    style={{
+                      borderTopColor: isDark ? "#334155" : "#E2E8F0",
+                    }}
+                    className="w-full border-t pt-3 my-2"
+                  >
+                    <View className="w-full flex-row justify-between py-1">
+                      <Text
+                        style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                        className="text-sm"
+                      >
+                        Exchange rate
+                      </Text>
+                      <Text
+                        style={{ color: isDark ? "#E2E8F0" : "#1E293B" }}
+                        className="font-semibold text-sm"
+                      >
+                        1 {quote.senderCurrency} = {quote.exchangeRate.toFixed(2)}{" "}
+                        {quote.recipientCurrency}
+                      </Text>
+                    </View>
 
-                  <View className="w-full h-px bg-gray-100 my-3" />
+                    <View className="w-full flex-row justify-between py-1">
+                      <Text
+                        style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                        className="text-sm"
+                      >
+                        Fee
+                      </Text>
+                      <Text
+                        style={{ color: isDark ? "#E2E8F0" : "#1E293B" }}
+                        className="font-semibold text-sm"
+                      >
+                        {quote.fee.toFixed(2)} {quote.senderCurrency}
+                      </Text>
+                    </View>
 
-                  <View className="flex-row justify-between mb-3">
-                    <Text className="text-muted text-sm">Total deducted</Text>
-                    <Text className="text-primary font-bold">
-                      {(quote.totalDeducted).toFixed(2)} {quote.senderCurrency}
-                    </Text>
+                    <View className="w-full flex-row justify-between py-1 mt-1">
+                      <Text
+                        style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                        className="text-sm font-semibold"
+                      >
+                        Total deducted
+                      </Text>
+                      <Text
+                        style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                        className="font-bold text-base"
+                      >
+                        {quote.totalDeducted.toFixed(2)} {quote.senderCurrency}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
@@ -359,7 +427,10 @@ export default function QuoteScreen() {
                   </View>
                 </View>
 
-                <Text className="text-muted text-xs text-center mt-2">
+                <Text
+                  style={{ color: isDark ? "#64748B" : "#94A3B8" }}
+                  className="text-xs text-center mt-2"
+                >
                   Rates are live and may change slightly at confirmation
                 </Text>
               </View>

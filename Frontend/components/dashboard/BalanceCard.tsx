@@ -16,54 +16,43 @@ export default function BalanceCard({
   onSend,
 }: BalanceCardProps) {
   return (
-    <View className="bg-primary rounded-[28px] p-6 shadow-lg">
-
-      <Text className="text-slate-400">
+    // Hero balance card remains dark navy in both themes for brand consistency
+    <View className="bg-[#0D1E36] rounded-[24px] p-5 border border-white/10 shadow-lg">
+      <Text className="text-slate-400 text-xs font-medium">
         Total Balance
       </Text>
 
-      <Text className="text-white text-4xl font-bold mt-2">
-        {currency} {balance.toLocaleString()}
+      <Text className="text-white text-3xl font-bold mt-1">
+        {currency}{" "}
+        {balance.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
       </Text>
 
-      <Text className="text-accent mt-2">
-        Available Balance
-      </Text>
-
-      <View className="flex-row mt-6">
-
+      <View className="flex-row mt-5">
         <TouchableOpacity
           onPress={onTopUp}
-          className="flex-1 bg-accent rounded-2xl py-4 mr-2 flex-row justify-center items-center"
+          activeOpacity={0.85}
+          className="flex-1 bg-accent rounded-xl py-3 mr-2 flex-row justify-center items-center shadow-sm"
         >
-          <Feather
-            name="plus"
-            size={18}
-            color="#0A1628"
-          />
-
-          <Text className="text-primary font-bold ml-2">
+          <Feather name="plus" size={16} color="#0A1628" />
+          <Text className="text-[#0A1628] font-bold text-sm ml-1.5">
             Top Up
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={onSend}
-          className="flex-1 border border-white/20 rounded-2xl py-4 ml-2 flex-row justify-center items-center"
+          activeOpacity={0.85}
+          className="flex-1 bg-white/10 border border-white/20 rounded-xl py-3 ml-2 flex-row justify-center items-center"
         >
-          <Feather
-            name="send"
-            size={18}
-            color="white"
-          />
-
-          <Text className="text-white font-bold ml-2">
+          <Feather name="send" size={16} color="white" />
+          <Text className="text-white font-bold text-sm ml-1.5">
             Send
           </Text>
         </TouchableOpacity>
-
       </View>
-
     </View>
   );
 }

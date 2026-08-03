@@ -12,8 +12,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui";
 import { normalizePhoneNumber } from "@/lib/utils/phone";
 import { transactionApi } from "@/lib/api";
+import { useTheme } from "@/lib/store/theme.store";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function ConfirmScreen() {
+  const { isDark } = useTheme();
+
   const params = useLocalSearchParams<{
     senderWalletId: string;
     recipientProvider: string;
@@ -29,137 +33,157 @@ export default function ConfirmScreen() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const providerLabel = {
-    MPESA: "M-Pesa",
-    MTN_MOMO: "MTN MoMo",
-  }[params.recipientProvider ?? ""] ?? params.recipientProvider;
+  const providerLabel =
+    {
+      MPESA: "M-Pesa",
+      MTN_MOMO: "MTN MoMo",
+    }[params.recipientProvider ?? ""] ?? params.recipientProvider;
 
-  const providerEmoji = {
-    MPESA: "📱",
-    MTN_MOMO: "💛",
-  }[params.recipientProvider ?? ""] ?? "💸";
+  const providerIcon =
+    params.recipientProvider === "MPESA" ? (
+      <MaterialCommunityIcons name="cellphone" size={24} color="#22C55E" />
+    ) : (
+      <MaterialCommunityIcons name="wallet" size={24} color="#EAB308" />
+    );
 
   const handleConfirm = async () => {
     setIsLoading(true);
     try {
-      console.log("CONFIRM PARAMS:", params);
-
-      console.log("TRANSFER BODY:", {
-        senderWalletId: params.senderWalletId,
-        recipientProvider: params.recipientProvider,
-        recipientNumber: normalizePhoneNumber(
-          params.recipientNumber ?? ""
-        ),
-        amount: Number(params.amount),
-      });
-    
       const result = await transactionApi.initiateTransfer({
-      senderWalletId: params.senderWalletId ?? "",
-      recipientProvider: params.recipientProvider ?? "",
-      recipientNumber: params.recipientNumber ?? "",
-      amount: Number(params.amount),
-
-      quotedExchangeRate: Number(params.exchangeRate),
-      quotedConvertedAmount: Number(params.convertedAmount)
-    });
+        senderWalletId: params.senderWalletId ?? "",
+        recipientProvider: params.recipientProvider ?? "",
+        recipientNumber: params.recipientNumber ?? "",
+        amount: Number(params.amount),
+        quotedExchangeRate: Number(params.exchangeRate),
+        quotedConvertedAmount: Number(params.convertedAmount),
+      });
 
       router.replace({
-        pathname:"/(app)/transactions/success",
-        params:{
+        pathname: "/(app)/transactions/success",
+        params: {
           transactionId: result.transactionId,
           amount: params.amount,
           currency: params.senderCurrency,
           recipient: params.recipientNumber,
-        }
+        },
       });
     } catch (error: any) {
-      console.log(
-        "TRANSFER FAILED RESPONSE:",
-        error.response?.data
-      );
-
       Alert.alert(
         "Transfer Failed",
         error.response?.data?.message ??
           "Something went wrong. Please try again.",
         [{ text: "OK" }]
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-surface">
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+    <SafeAreaView
+      style={{ backgroundColor: isDark ? "#0A1628" : "#F8FAFC" }}
+      className="flex-1"
+    >
+      <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
 
       <ScrollView className="flex-1">
         {/* Header */}
-        <View className="bg-primary px-6 pt-5 pb-10">
-
+        <View className="bg-[#0A1628] px-6 pt-3 pb-8">
           <TouchableOpacity
             onPress={() => router.back()}
-            className="w-11 h-11 rounded-full bg-white/10 items-center justify-center mb-6"
+            className="w-10 h-10 rounded-full bg-white/10 items-center justify-center mb-4"
+            activeOpacity={0.8}
           >
-            <Text className="text-white text-xl">
-              ←
-            </Text>
+            <Feather name="arrow-left" size={20} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <Text className="text-slate-400 text-sm">
+          <Text className="text-slate-400 text-xs uppercase tracking-wider font-semibold">
             Confirm transfer
           </Text>
 
-          <Text className="text-white text-3xl font-black mt-1">
+          <Text className="text-white text-3xl font-bold mt-0.5">
             Send Money
           </Text>
 
-
-          <Text className="text-muted text-sm">
+          <Text className="text-slate-400 text-sm mt-1">
             Review the details before sending
           </Text>
         </View>
 
-        <View className="px-6 pt-6">
+        {/* Form Container */}
+        <View
+          style={{ backgroundColor: isDark ? "#0F172A" : "#FFFFFF" }}
+          className="px-6 pt-6 flex-1 rounded-t-[28px] -mt-4 shadow-sm"
+        >
           {/* Recipient */}
-          <View className="bg-white rounded-3xl p-5 mb-4">
-
-              <Text className="text-slate-400 text-xs uppercase mb-4">
+          <View
+            style={{
+              backgroundColor: isDark ? "#1E293B" : "#F8FAFC",
+              borderColor: isDark ? "#334155" : "#E2E8F0",
+            }}
+            className="rounded-2xl border p-5 mb-4"
+          >
+            <Text
+              style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+              className="text-xs uppercase font-medium tracking-wider mb-3"
+            >
               Recipient
-              </Text>
+            </Text>
 
             <View className="flex-row items-center">
-
-              <View className="w-14 h-14 rounded-2xl bg-slate-100 items-center justify-center">
-
-                <Text className="text-3xl">
-                  {providerEmoji}
-                </Text>
-
+              <View
+                style={{
+                  backgroundColor: isDark ? "#0F172A" : "#E2E8F0",
+                }}
+                className="w-12 h-12 rounded-xl items-center justify-center"
+              >
+                {providerIcon}
               </View>
 
               <View className="ml-4">
-
-                <Text className="text-primary text-lg font-bold">
+                <Text
+                  style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                  className="text-lg font-bold"
+                >
                   {params.recipientNumber}
                 </Text>
 
-                <Text className="text-muted">
+                <Text
+                  style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                  className="text-xs font-medium"
+                >
                   via {providerLabel}
                 </Text>
-
               </View>
-          </View>
-
+            </View>
           </View>
 
           {/* Transfer breakdown */}
-          <View className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
-            <Text className="text-slate-400 text-xs uppercase mb-5">
-              PAYMENT SUMMARY
+          <View
+            style={{
+              backgroundColor: isDark ? "#1E293B" : "#F8FAFC",
+              borderColor: isDark ? "#334155" : "#E2E8F0",
+            }}
+            className="rounded-2xl border p-5 mb-4"
+          >
+            <Text
+              style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+              className="text-xs uppercase font-medium tracking-wider mb-4"
+            >
+              Payment Summary
             </Text>
 
             <View className="flex-row justify-between mb-3">
-              <Text className="text-muted text-sm">You send</Text>
-              <Text className="text-primary font-semibold">
+              <Text
+                style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                className="text-sm"
+              >
+                You send
+              </Text>
+              <Text
+                style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                className="font-semibold text-sm"
+              >
                 {params.senderCurrency}{" "}
                 {parseFloat(params.amount ?? "0").toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -168,8 +192,16 @@ export default function ConfirmScreen() {
             </View>
 
             <View className="flex-row justify-between mb-3">
-              <Text className="text-muted text-sm">Exchange rate</Text>
-              <Text className="text-primary font-semibold">
+              <Text
+                style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                className="text-sm"
+              >
+                Exchange rate
+              </Text>
+              <Text
+                style={{ color: isDark ? "#E2E8F0" : "#1E293B" }}
+                className="font-semibold text-sm"
+              >
                 1 {params.senderCurrency} ={" "}
                 {parseFloat(params.exchangeRate ?? "0").toFixed(4)}{" "}
                 {params.recipientCurrency}
@@ -177,8 +209,16 @@ export default function ConfirmScreen() {
             </View>
 
             <View className="flex-row justify-between mb-3">
-              <Text className="text-muted text-sm">Fee</Text>
-              <Text className="text-primary font-semibold">
+              <Text
+                style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                className="text-sm"
+              >
+                Fee
+              </Text>
+              <Text
+                style={{ color: isDark ? "#E2E8F0" : "#1E293B" }}
+                className="font-semibold text-sm"
+              >
                 {params.senderCurrency}{" "}
                 {parseFloat(params.fee ?? "0").toLocaleString("en-US", {
                   minimumFractionDigits: 2,
@@ -186,11 +226,20 @@ export default function ConfirmScreen() {
               </Text>
             </View>
 
-            <View className="h-px bg-gray-100 my-3" />
-
-            <View className="flex-row justify-between">
-              <Text className="text-primary font-bold">Total deducted</Text>
-              <Text className="text-primary font-bold">
+            <View
+              style={{ borderTopColor: isDark ? "#334155" : "#E2E8F0" }}
+              className="border-t pt-3 my-1 flex-row justify-between"
+            >
+              <Text
+                style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                className="font-semibold text-sm"
+              >
+                Total deducted
+              </Text>
+              <Text
+                style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                className="font-bold text-base"
+              >
                 {params.senderCurrency}{" "}
                 {parseFloat(params.totalDeducted ?? "0").toLocaleString(
                   "en-US",
@@ -200,48 +249,39 @@ export default function ConfirmScreen() {
             </View>
           </View>
 
-          {/* Recipient gets */}
-          <View className="bg-primary rounded-3xl p-6 mb-6 items-center">
-
-
-              <Text className="text-slate-400 text-sm">
-                Recipient receives
-              </Text>
-              <Text className="text-accent text-4xl font-black mt-2">
-
-                {params.recipientCurrency}{" "}
-                {parseFloat(params.convertedAmount ?? "0")
-                  .toLocaleString(
-                    "en-US",
-                    {
-                    minimumFractionDigits:2
-                    }
-                )}
-
-              </Text>
-
-              <Text className="text-slate-400 mt-3">
-
-                1 {params.senderCurrency}
-                {" = "}
-                {parseFloat(params.exchangeRate ?? "0")
-                  .toFixed(4)}
-                {" "}
-                {params.recipientCurrency}
-
-              </Text>
-            </View>
-
-          {/* Warning */}
-          <View className="bg-accent/10 rounded-2xl p-4 mb-6">
-            <Text className="text-primary text-sm leading-5">
-              🔒 Your transfer is protected by PanWallet security.
-              Review the details carefully before confirming.
+          {/* Recipient gets Hero Card */}
+          <View className="bg-[#0A1628] rounded-2xl p-6 mb-6 items-center">
+            <Text className="text-slate-400 text-xs uppercase tracking-wider font-medium">
+              Recipient receives
+            </Text>
+            <Text className="text-[#F5A623] text-4xl font-bold mt-1">
+              {params.recipientCurrency}{" "}
+              {parseFloat(params.convertedAmount ?? "0").toLocaleString(
+                "en-US",
+                { minimumFractionDigits: 2 }
+              )}
             </Text>
 
+            <Text className="text-slate-400 text-xs mt-2">
+              1 {params.senderCurrency} ={" "}
+              {parseFloat(params.exchangeRate ?? "0").toFixed(4)}{" "}
+              {params.recipientCurrency}
+            </Text>
           </View>
 
-          {/* Buttons */}
+          {/* Security Banner */}
+          <View className="bg-[#F5A623]/10 border border-[#F5A623]/20 rounded-2xl p-4 mb-6 flex-row items-center">
+            <Feather name="shield" size={18} color="#F5A623" />
+            <Text
+              style={{ color: isDark ? "#E2E8F0" : "#1E293B" }}
+              className="text-xs ml-3 flex-1 font-medium leading-4"
+            >
+              Your transfer is protected by PanWallet security. Review details
+              carefully before confirming.
+            </Text>
+          </View>
+
+          {/* Actions */}
           <Button
             title="Send Money Now"
             variant="primary"

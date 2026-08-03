@@ -3,85 +3,30 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   RefreshControl,
   StatusBar,
   ActivityIndicator,
   Dimensions,
+  TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { BarChart, LineChart, PieChart } from "react-native-gifted-charts";
-import { Card, Button, Badge } from "@/components/ui";
+import { BarChart, PieChart } from "react-native-gifted-charts";
+import { Card } from "@/components/ui";
 import { useAuthStore, useWalletStore } from "@/lib/store";
 import { useTheme } from "@/lib/store/theme.store";
 import { transactionApi, Transaction } from "@/lib/api";
 import QuickActions from "@/components/dashboard/QuickActions";
-import { Wallet } from "@/lib/api/wallet.api";
 import RecentTransactions from "@/components/dashboard/RecentTransactions";
 import BalanceCard from "@/components/dashboard/BalanceCard";
 import GreetingHeader from "@/components/dashboard/GreetingHeader";
 import WalletCarousel from "@/components/dashboard/WalletCarousel";
-import WalletCard from "@/components/dashboard/WalletCard";
-import { Feather } from "@expo/vector-icons";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import StatCard from "@/components/dashboard/StatCard";
 import FloatingSendButton from "@/components/dashboard/FloatingSendButton";
+import { Feather } from "@expo/vector-icons";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CHART_WIDTH = SCREEN_WIDTH - 64;
-
-// ── Sub-components ─────────────────────────────────────────────────
-
-function TransactionItem({ transaction }: { transaction: Transaction }) {
-  const statusVariant = {
-    COMPLETED: "success",
-    FAILED: "error",
-    PENDING: "pending",
-    REVERSED: "warning",
-  }[transaction.status] as "success" | "error" | "pending" | "warning";
-
-  const providerIcon = {
-    MPESA: "smartphone",
-    MTN_MOMO: "wifi",
-    PANWALLET_INTERNAL: "globe",
-  }[transaction.recipientProvider] ?? "send";
-
-  const formattedDate = new Date(transaction.createdAt).toLocaleDateString(
-    "en-US",
-    { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }
-  );
-
-  return (
-    <TouchableOpacity
-      onPress={() => router.push(`/(app)/transactions/${transaction.id}`)}
-      className="flex-row items-center py-4 border-b border-gray-100"
-    >
-      {/* Provider icon */}
-      <View className="w-11 h-11 rounded-full bg-gray-100 items-center justify-center mr-4">
-        <Text className="text-xl">{providerIcon}</Text>
-      </View>
-
-      {/* Details */}
-      <View className="flex-1">
-        <Text className="text-primary font-semibold text-sm" numberOfLines={1}>
-          To {transaction.recipientNumber}
-        </Text>
-        <Text className="text-muted text-xs mt-0.5">{formattedDate}</Text>
-      </View>
-
-      {/* Amount + status */}
-      <View className="items-end">
-        <Text className="text-primary font-bold text-sm mb-1">
-          -{parseFloat(transaction.amount).toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-          })}
-        </Text>
-        <Badge label={transaction.status} variant={statusVariant} size="sm" />
-      </View>
-    </TouchableOpacity>
-  );
-}
 
 // ── Charts ─────────────────────────────────────────────────────────
 
@@ -106,7 +51,7 @@ function SpendByProviderChart({
   if (labels.length === 0) {
     return (
       <View className="items-center py-8">
-        <Text className="text-muted dark:text-gray-400 text-sm">
+        <Text className="text-slate-500 dark:text-slate-400 text-sm">
           No completed transactions yet
         </Text>
       </View>
@@ -116,8 +61,12 @@ function SpendByProviderChart({
   const pieData = labels.map((label, i) => ({
     value: providerTotals[label] ?? 0,
     color: colors[i % colors.length] ?? "#F5A623",
-    text: label === "PANWALLET_INTERNAL" ? "Internal" :
-          label === "MPESA" ? "M-Pesa" : "MTN",
+    text:
+      label === "PANWALLET_INTERNAL"
+        ? "Internal"
+        : label === "MPESA"
+        ? "M-Pesa"
+        : "MTN",
   }));
 
   return (
@@ -128,7 +77,7 @@ function SpendByProviderChart({
         radius={65}
         innerRadius={42}
         centerLabelComponent={() => (
-          <Text className="text-primary dark:text-white font-bold text-xs text-center">
+          <Text className="text-slate-900 dark:text-white font-bold text-xs text-center">
             By{"\n"}Provider
           </Text>
         )}
@@ -137,11 +86,11 @@ function SpendByProviderChart({
         {pieData.map((item) => (
           <View key={item.text} className="flex-row items-center mr-4 mb-2">
             <View
-              className="w-3 h-3 rounded-full mr-1"
+              className="w-3 h-3 rounded-full mr-1.5"
               style={{ backgroundColor: item.color }}
             />
-            <Text className="text-muted dark:text-gray-400 text-xs">
-              {item.text}: ${(item.value).toFixed(2)}
+            <Text className="text-slate-600 dark:text-slate-400 text-xs font-medium">
+              {item.text}: ${item.value.toFixed(2)}
             </Text>
           </View>
         ))}
@@ -157,7 +106,6 @@ function TransactionVolumeChart({
   transactions: Transaction[];
   isDark: boolean;
 }) {
-  // Build last 7 days data
   const days: Record<string, number> = {};
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
@@ -182,7 +130,7 @@ function TransactionVolumeChart({
     frontColor: "#F5A623",
     topLabelComponent: () =>
       value > 0 ? (
-        <Text style={{ fontSize: 8, color: isDark ? "#9CA3AF" : "#94A3B8" }}>
+        <Text style={{ fontSize: 9, color: isDark ? "#9CA3AF" : "#64748B", marginBottom: 2 }}>
           ${value.toFixed(0)}
         </Text>
       ) : null,
@@ -192,34 +140,50 @@ function TransactionVolumeChart({
     <BarChart
       data={barData}
       width={CHART_WIDTH - 40}
-      height={90}
-      barWidth={28}
-      spacing={12}
+      height={110}
+      barWidth={26}
+      spacing={14}
       roundedTop
       hideRules
       xAxisThickness={0}
       yAxisThickness={0}
-      yAxisTextStyle={{ color: isDark ? "#9CA3AF" : "#94A3B8", fontSize: 10 }}
-      xAxisLabelTextStyle={{ color: isDark ? "#9CA3AF" : "#94A3B8", fontSize: 10 }}
+      yAxisTextStyle={{ color: isDark ? "#9CA3AF" : "#64748B", fontSize: 10 }}
+      xAxisLabelTextStyle={{
+        color: isDark ? "#9CA3AF" : "#64748B",
+        fontSize: 10,
+        fontWeight: "500",
+      }}
       noOfSections={3}
-      maxValue={
-        Math.max(...Object.values(days), 10)
-      }
+      maxValue={Math.max(...Object.values(days), 10)}
     />
   );
 }
 
-
-// ── Main screen ────────────────────────────────────────────────────
+// ── Main Screen ────────────────────────────────────────────────────
 
 export default function DashboardScreen() {
-  const { user, logout } = useAuthStore();
-  const { wallets, isLoading: walletsLoading, fetchWallets, forceRefresh } = useWalletStore();
+  const { user, logout, fetchProfile } = useAuthStore();
+  const {
+    wallets,
+    isLoading: walletsLoading,
+    fetchWallets,
+    forceRefresh,
+  } = useWalletStore();
   const { isDark } = useTheme();
 
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
+
+  // Derive User Greeting Name safely (checking name, fullName, or email handle)
+  const displayName =
+    user?.name ||
+    (user as any)?.fullName ||
+    (user as any)?.username ||
+    user?.email?.split("@")[0] ||
+    "User";
+
+  const firstName = displayName.split(" ")[0];
 
   const internalWallet = wallets.find(
     (w) => w.provider === "PANWALLET_INTERNAL"
@@ -244,27 +208,35 @@ export default function DashboardScreen() {
     return "Good evening";
   };
 
-  const firstName = user?.name?.split(" ")[0] ?? "there";
-
   const loadTransactions = useCallback(async () => {
     setTransactionsLoading(true);
     try {
       const data = await transactionApi.list();
-      setTransactions(data.slice(0, 5)); // Show last 5 on dashboard
+      setTransactions(data.slice(0, 5));
     } catch {
-      // Fail silently on dashboard — full history is on transactions screen
+      // Fail silently on dashboard
     } finally {
       setTransactionsLoading(false);
     }
   }, []);
 
-  const loadData = useCallback(async (force = false) => {
-    await Promise.all([force ? forceRefresh() : fetchWallets(), loadTransactions()]);
-  }, [fetchWallets, forceRefresh, loadTransactions]);
+  const loadData = useCallback(
+    async (force = false) => {
+      // Refresh profile if user isn't populated
+      if (typeof fetchProfile === "function" && !user?.name) {
+        fetchProfile().catch(() => {});
+      }
+      await Promise.all([
+        force ? forceRefresh() : fetchWallets(),
+        loadTransactions(),
+      ]);
+    },
+    [fetchWallets, forceRefresh, loadTransactions, fetchProfile, user]
+  );
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -274,19 +246,20 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView
-      className="flex-1 bg-white"
-      edges={["top", "left", "right", "bottom"]}
+      style= { { backgroundColor: isDark ? "#0A1628" : "#F8FAFC"}}
+      className="flex-1"
+      edges={["top", "left", "right"]}
     >
       <StatusBar
-        barStyle="light-content"
-        backgroundColor="#0A1628"
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={isDark ? "#0A1628" : "#0F172A"}
       />
-      <View className="flex-1">
+      <View className="flex-1 relative">
         <ScrollView
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingBottom: 180, // space above bottom tabs
+            paddingBottom: 110,
           }}
           refreshControl={
             <RefreshControl
@@ -297,141 +270,116 @@ export default function DashboardScreen() {
             />
           }
         >
-          {/* Header */}
-          <View className="bg-primary">
+          {/* Top Navy Header Block (Looks rich & premium in both modes) */}
+          <View className="bg-[#0F172A] dark:bg-[#0A1628] pt-2 pb-6 px-6 rounded-b-[32px] shadow-md">
             <GreetingHeader
               greeting={getGreeting()}
               firstName={firstName}
               onLogout={logout}
             />
-          </View>
-          {/* Balance */}
-          <View className="bg-primary-card rounded-t-[32px] -mt-6 shadow-sm pt-6">
-            <BalanceCard
-              balance={totalBalance}
-              currency="USD"
-              onTopUp={() =>
-                router.push({
-                  pathname: "/(app)/topup",
-                  params: {
-                    walletId: internalWallet?.id ?? "",
-                  },
-                } as any)
-              }
-              onSend={() =>
-                router.push("/(app)/transactions/quote")
-              }
-            />
-          </View>
-          <View className="px-6 -mt-4">
-            {/* Stats */}
-            <View className="flex-row mb-10">
-              <StatCard
-                icon={
-                  <Feather
-                    name="bar-chart-2"
-                    size={20}
-                    color="#F5A623"
-                  />
+            <View className="mt-4">
+              <BalanceCard
+                balance={totalBalance}
+                currency="USD"
+                onTopUp={() =>
+                  router.push({
+                    pathname: "/(app)/topup",
+                    params: { walletId: internalWallet?.id ?? "" },
+                  } as any)
                 }
+                onSend={() => router.push("/(app)/transactions/quote")}
+              />
+            </View>
+          </View>
+
+          {/* Body Section */}
+          <View className="px-6 pt-6">
+            {/* Stats row */}
+            <View className="flex-row mb-8 -mx-1">
+              <StatCard
+                icon={<Feather name="bar-chart-2" size={18} color="#F5A623" />}
                 label="Transactions"
                 value={transactions.length.toString()}
               />
               <StatCard
-                icon={
-                  <Feather
-                    name="check-circle"
-                    size={20}
-                    color="#22C55E"
-                  />
-                }
+                icon={<Feather name="check-circle" size={18} color="#22C55E" />}
                 label="Completed"
                 value={completedCount.toString()}
               />
               <StatCard
-                icon={
-                  <Feather
-                    name="send"
-                    size={20}
-                    color="#3B82F6"
-                  />
-                }
+                icon={<Feather name="send" size={18} color="#3B82F6" />}
                 label="Total Sent"
                 value={`$${totalSent.toFixed(0)}`}
               />
             </View>
-            {/* Wallets */}
-            <View className="rounded-[32px]">
-              <WalletCarousel
-                wallets={wallets}
-                loading={walletsLoading}
-              />
-              <QuickActions
-                walletId={internalWallet?.id}
-              />
+
+            {/* Wallets Carousel */}
+            <View className="mb-8">
+              <WalletCarousel wallets={wallets} loading={walletsLoading} />
             </View>
-            {/* Transaction Chart */}
-            <View className="mb-10 rounded-[32px]">
-              <Card
-                variant="elevated"
-                padding="lg"
-              >
-                <Feather
-                  name="bar-chart-2"
-                  size={20}
-                  color="#F5A623"
-                />
-                <Text className="text-primary dark:text-white font-bold text-base mb-4">
-                  Transaction Activity
-                </Text>
-                {
-                  transactionsLoading ? (
-                    <ActivityIndicator color="#F5A623"/>
-                  ) : (
-                    <TransactionVolumeChart
-                      transactions={transactions}
-                      isDark={isDark}
-                    />
-                  )
-                }
+
+            {/* Quick Actions */}
+            <QuickActions walletId={internalWallet?.id} />
+
+            {/* Transaction Activity Chart */}
+            <View className="mb-8">
+              <Card variant="elevated" padding="lg">
+                <View className="flex-row items-center mb-4">
+                  <Feather name="bar-chart-2" size={18} color="#F5A623" />
+                  <Text
+                    style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                    className="font-bold text-base ml-2"
+                  >
+                    Transaction Activity
+                  </Text>
+                </View>
+                {transactionsLoading ? (
+                  <ActivityIndicator color="#F5A623" className="py-6" />
+                ) : (
+                  <TransactionVolumeChart
+                    transactions={transactions}
+                    isDark={isDark}
+                  />
+                )}
               </Card>
             </View>
-            {/* Provider Chart */}
-            <View className="mb-10 rounded-[32px]">
-              <Card
-                variant="elevated"
-                padding="lg"
-              >
-                <Feather
-                  name="bar-chart-2"
-                  size={20}
-                  color="#F5A623"
-                />
-                <Text className="text-primary dark:text-white font-bold text-base mb-4">
-                  Spending Distribution
-                </Text>
-                {
-                  transactionsLoading ? (
-                    <ActivityIndicator color="#F5A623"/>
-                  ) : (
-                    <SpendByProviderChart
-                      transactions={transactions}
-                      isDark={isDark}
-                    />
-                  )
-                }
+              
+          
+
+            {/* Spending Distribution Chart */}
+            <View className="mb-8">
+              <Card variant="elevated" padding="lg">
+                <View className="flex-row items-center mb-4">
+                  <Feather name="pie-chart" size={18} color="#F5A623" />
+                  <Text
+                    style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                    className="font-bold text-base ml-2"
+                  >
+                    Spending Distribution
+                  </Text>
+                </View>
+                {transactionsLoading ? (
+                  <ActivityIndicator color="#F5A623" className="py-6" />
+                ) : (
+                  <SpendByProviderChart
+                    transactions={transactions}
+                    isDark={isDark}
+                  />
+                )}
               </Card>
             </View>
-            {/* Recent Transactions */}
+
+            {/* Recent Transactions List */}
             <RecentTransactions
               loading={transactionsLoading}
               transactions={transactions}
             />
           </View>
         </ScrollView>
-        {/* Floating button stays above everything */}
+
+        {/* Floating Action Button */}
         <FloatingSendButton />
       </View>
     </SafeAreaView>
-);
+  );
 }
