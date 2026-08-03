@@ -227,7 +227,7 @@ class AuthService {
 
         const tokens = await this.issueTokens(
             payload.sub,
-            payload.phone,
+            payload.phone!,
             payload.family
         );
 

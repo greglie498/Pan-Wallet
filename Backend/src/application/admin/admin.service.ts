@@ -1,4 +1,3 @@
-import { Admin } from "@prisma/client";
 import crypto from "crypto";
 import { adminRepository } from "../../infrastructure/repositories/admin.repository";
 import { paswswordService } from "../../infrastructure/security/password.service";
@@ -42,11 +41,48 @@ class AdminService {
 
         const accessToken = jwtService.signAccessToken({
             sub: admin.id,
-            phone: admin.email,
+            email: admin.email,
             role: "ADMIN",
         });
 
         const refreshToken = jwtService.signRefreshToken({
+            sub: admin.id,
+            email: admin.email,
+            family: crypto.randomUUID(),
+            role: "ADMIN",
+        });
+
+        return {
+            admin: {
+                id: admin.id,
+                username: admin.username,
+                email: admin.email,
+                role: admin.role,
+            },
+            tokens: { accessToken, refreshToken },
+        };
+    }
+
+    async refresh(refreshToken: string): Promise<AdminAuthResult> {
+        const payload = jwtService.verifyRefreshToken(refreshToken);
+
+        if(payload.role !== "ADMIN") {
+            throw new UnauthorizedError("Invalid admin refresh token.");
+        }
+
+        const admin = await adminRepository.findById(payload.sub);
+
+        if (!admin) {
+            throw new NotFoundError("Admin not found.");
+        }
+
+        const newAccessToken = jwtService.signAccessToken({
+            sub: admin.id,
+            phone: admin.email,
+            role: "ADMIN",
+        });
+
+        const newRefreshToken = jwtService.signRefreshToken({
             sub: admin.id,
             phone: admin.email,
             family: crypto.randomUUID(),
@@ -60,7 +96,7 @@ class AdminService {
                 email: admin.email,
                 role: admin.role,
             },
-            tokens: { accessToken, refreshToken },
+            tokens: { accessToken: newAccessToken, refreshToken: newRefreshToken },
         };
     }
 }

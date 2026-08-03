@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import { adminService } from "../../../application/admin/admin.service";
-import { adminStatsService } from "../../../application/admin/admin.stast.service";
+import { adminStatsService } from "../../../application/admin/admin.stat.service";
 import { asyncHandler } from "../../../shared/async-handler";
 import { sendSuccess } from "../../../shared/http-response";
 import { ForbiddenError } from "../../../domain/error";
+
 
 class AdminController {
     //----- Auth ----------------------------------------------------------------
@@ -11,6 +12,12 @@ class AdminController {
         const result =await adminService.login(req.body);
         return sendSuccess(res, 200, result, "Admin login successfull.");
     });
+
+    //----- Refresh Token -------------------------------------------------------
+    refresh = asyncHandler(async (req: Request, res: Response) => {
+        const result = await adminService.refresh(req.body.refreshToken);
+        return sendSuccess(res, 200, result, "Admin token refreshed successfully.");
+    })
 
     //--- Stats -------------------------------------------------------------------
     getStats = asyncHandler(async (req: Request, res: Response) => {
@@ -36,6 +43,8 @@ class AdminController {
         const result = await adminStatsService.getTransactions(page, limit);
         return sendSuccess(res, 200, result, "Transactions retrieved successfully");
     });
+    
 }
+
 
 export const adminController = new AdminController();

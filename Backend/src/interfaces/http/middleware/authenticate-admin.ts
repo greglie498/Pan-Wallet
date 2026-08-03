@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, Router } from "express";
 import { jwtService } from "../../../infrastructure/security/jwt.service";
 import { UnauthorizedError, ForbiddenError } from "../../../domain/error";
 
@@ -27,15 +27,24 @@ export function authenticateAdmin(
     const token = authHeader.slice(7);
 
     try {
-        const payload = jwtService.verifyAccessToken(token);
 
+       const payload = jwtService.verifyAccessToken(token);
+        if (!payload.sub) {
+            return next(
+                new UnauthorizedError("Invalid admin token.")
+            );
+        }
         if (payload.role !== "ADMIN") {
-            return next(new ForbiddenError("Admin access required."));
+            return next(
+                new ForbiddenError(
+                    "Admin access required."
+                )
+            );
         }
 
         req.admin = {
             id: payload.sub,
-            email: payload.phone,
+            email: payload.email ?? payload.phone!,
             role: payload.role,
         };
 

@@ -4,3 +4,7 @@ export const adminLoginSchema = z.object({
     username: z.string().min(1, "Username is required."),
     password: z.string().min(1, "Password is required."),
 });
+
+export const adminRefreshSchema = z.object({
+    refreshToken: z.string().min(1),
+});

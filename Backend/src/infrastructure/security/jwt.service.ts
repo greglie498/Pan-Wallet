@@ -4,7 +4,8 @@ import { UnauthorizedError } from "../../domain/error";
 
 export interface TokenPayload {
     sub: string;
-    phone: string;
+    phone?: string;
+    email?: string;
     role?: string;
 }
 
@@ -16,8 +17,11 @@ function isTokenPayload(value: any): value is TokenPayload {
     return (
         typeof value === "object" &&
         value !== null &&
-        typeof (value as Record<string, unknown>)["sub"] === "string" &&
-        typeof (value as Record<string, unknown>)["phone"] === "string"
+        typeof value.sub === "string" &&
+        (
+            typeof value.phone === "string" ||
+            typeof value.email === "string"
+        )
     );
 }
 
