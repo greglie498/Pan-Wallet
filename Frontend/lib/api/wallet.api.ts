@@ -36,4 +36,20 @@ export const walletApi = {
   unlink: async (walletId: string): Promise<void> => {
     await apiClient.delete(`/wallets/${walletId}/unlink`);
   },
+
+  topUp: async (walletId: string, amount: number): Promise<Wallet> => {
+    const response = await apiClient.post(`/wallets/${walletId}/topup`, {
+      amount,
+    });
+    return response.data.data;
+  },
+
+  // Aliases to safely match screen method calls
+  linkWallet: async (payload: LinkWalletPayload): Promise<Wallet> => {
+    return walletApi.link(payload);
+  },
+
+  unlinkWallet: async (walletId: string): Promise<void> => {
+    return walletApi.unlink(walletId);
+  },
 };

@@ -1,207 +1,149 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
   StatusBar,
-  ActivityIndicator,
+  TouchableOpacity,
+  ScrollView,
+  Modal,
   Alert,
+  ActivityIndicator,
 } from "react-native";
-import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card, Badge, Button } from "@/components/ui";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Button, Input, Card } from "@/components/ui";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useWalletStore } from "@/lib/store";
 import { useTheme } from "@/lib/store/theme.store";
-import { Wallet } from "@/lib/api/wallet.api";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { walletApi } from "@/lib/api/wallet.api";
 
-function WalletDetailCard({
-  wallet,
-  onUnlink,
-}: {
-  wallet: Wallet;
-  onUnlink: (id: string) => void;
-}) {
-  const { isDark } = useTheme();
-
-  const providerInfo = {
-    PANWALLET_INTERNAL: {
-      label: "PanWallet Internal",
-      icon: <Feather name="globe" size={24} color="#0A1628" />,
-      color: "bg-[#F5A623]",
-      description: "Your main USD wallet",
-    },
-    MPESA: {
-      label: "M-Pesa",
-      icon: (
-        <MaterialCommunityIcons name="cellphone" size={24} color="#FFFFFF" />
-      ),
-      color: "bg-green-600",
-      description: "Safaricom M-Pesa",
-    },
-    MTN_MOMO: {
-      label: "MTN MoMo",
-      icon: <MaterialCommunityIcons name="wallet" size={24} color="#0A1628" />,
-      color: "bg-yellow-500",
-      description: "MTN Mobile Money",
-    },
-  }[wallet.provider] ?? {
-    label: "Wallet",
-    icon: <Feather name="credit-card" size={24} color="#FFFFFF" />,
-    color: "bg-slate-700",
-    description: "External payment account",
-  };
-
-  const isInternal = wallet.provider === "PANWALLET_INTERNAL";
-
-  const handleUnlink = () => {
-    Alert.alert(
-      "Unlink Wallet",
-      `Are you sure you want to unlink your ${providerInfo?.label} wallet?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Unlink",
-          style: "destructive",
-          onPress: () => onUnlink(wallet.id),
-        },
-      ]
-    );
-  };
-
-  return (
-    <Card variant="elevated" padding="lg" className="mb-4">
-      {/* Provider Header */}
-      <View className="px-6 py-4 flex-row items-center justify-between border-b ...">
-        <View>
-          <Text className="text-2xl font-bold ...">My Wallets</Text>
-          <Text className="text-xs ...">{wallets.length} wallet(s) linked</Text>
-        </View>
-        
-        <View className="flex-row items-center space-x-2">
-          <ThemeToggle />
-          <TouchableOpacity
-            className="w-10 h-10 rounded-full bg-[#F5A623] items-center justify-center shadow-sm ml-2"
-            onPress={() => router.push("/(app)/wallets/link")}
-          >
-            <Feather name="plus" size={20} color="#0A1628" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Wallet Details Block */}
-      <View
-        style={{
-          backgroundColor: isDark ? "#1E293B" : "#F8FAFC",
-          borderColor: isDark ? "#334155" : "#E2E8F0",
-        }}
-        className="rounded-xl p-4 mb-4 border"
-      >
-        <View className="flex-row justify-between mb-3">
-          <Text
-            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
-            className="text-sm"
-          >
-            Wallet Number
-          </Text>
-          <Text
-            style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
-            className="font-medium text-sm"
-          >
-            {wallet.walletNumber}
-          </Text>
-        </View>
-
-        <View className="flex-row justify-between mb-3">
-          <Text
-            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
-            className="text-sm"
-          >
-            Currency
-          </Text>
-          <Text
-            style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
-            className="font-medium text-sm"
-          >
-            {wallet.currency}
-          </Text>
-        </View>
-
-        <View className="flex-row justify-between items-center">
-          <Text
-            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
-            className="text-sm"
-          >
-            Balance
-          </Text>
-          <Text
-            style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
-            className="font-bold text-base"
-          >
-            {wallet.currency}{" "}
-            {parseFloat(wallet.balance).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </Text>
-        </View>
-      </View>
-
-      {/* Unlink Action — Hidden for primary wallet */}
-      {!isInternal && (
-        <TouchableOpacity
-          onPress={handleUnlink}
-          className="flex-row items-center justify-center py-3 border border-red-500/30 bg-red-500/10 rounded-xl"
-          activeOpacity={0.8}
-        >
-          <Feather name="trash-2" size={14} color="#EF4444" />
-          <Text className="text-red-500 text-xs font-semibold ml-2">
-            Unlink Wallet
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {isInternal && (
-        <View
-          style={{
-            backgroundColor: isDark ? "#1E293B" : "#EFF6FF",
-            borderColor: isDark ? "#334155" : "#DBEAFE",
-          }}
-          className="flex-row items-center rounded-xl p-3 border"
-        >
-          <Feather name="lock" size={14} color="#3B82F6" />
-          <Text className="text-blue-500 text-xs ml-2 font-medium flex-1">
-            This is your primary wallet and cannot be unlinked.
-          </Text>
-        </View>
-      )}
-    </Card>
-  );
-}
+type ProviderType = "MPESA" | "MTN_MOMO";
 
 export default function WalletsScreen() {
   const { isDark } = useTheme();
-  const { wallets, isLoading, fetchWallets, unlinkWallet } = useWalletStore();
-  const [refreshing, setRefreshing] = React.useState(false);
+  const { wallets, fetchWallets, isLoading } = useWalletStore();
+
+  // Modals state
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
+
+  // Form Inputs
+  const [topUpAmount, setTopUpAmount] = useState("");
+  const [linkProvider, setLinkProvider] = useState<ProviderType>("MPESA");
+  const [linkPhoneNumber, setLinkPhoneNumber] = useState("");
+
+  // Loading & Error states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWallets();
   }, []);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchWallets();
-    setRefreshing(false);
+  const totalBalance = wallets.reduce(
+    (acc, wallet) => acc + parseFloat(wallet.balance || "0"),
+    0
+  );
+
+  const handleTopUp = async () => {
+    if (!selectedWalletId) return;
+    const amount = parseFloat(topUpAmount);
+
+    if (isNaN(amount) || amount <= 0) {
+      setErrorMessage("Top-up amount must be greater than zero.");
+      return;
+    }
+
+    if (amount > 10000) {
+      setErrorMessage("Maximum top-up amount is $10,000 per transaction.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      await walletApi.topUp(selectedWalletId, amount);
+      await fetchWallets();
+      setShowTopUpModal(false);
+      setTopUpAmount("");
+    } catch (err: any) {
+      setErrorMessage(
+        err.response?.data?.message || err.message || "Failed to top up wallet."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleUnlink = async (walletId: string) => {
+  const handleLinkWallet = async () => {
+    if (!linkPhoneNumber.trim()) {
+      setErrorMessage("Please enter a valid phone or account number.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
     try {
-      await unlinkWallet(walletId);
-    } catch {
-      Alert.alert("Error", "Failed to unlink wallet. Please try again.");
+      await walletApi.linkWallet({
+        provider: linkProvider,
+        walletNumber: linkPhoneNumber.trim(),
+      });
+      await fetchWallets();
+      setShowLinkModal(false);
+      setLinkPhoneNumber("");
+    } catch (err: any) {
+      setErrorMessage(
+        err.response?.data?.message || err.message || "Failed to link wallet."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUnlinkWallet = (walletId: string, provider: string) => {
+    if (provider === "PANWALLET_INTERNAL") {
+      Alert.alert(
+        "Action Restricted",
+        "Your primary internal PanWallet cannot be unlinked."
+      );
+      return;
+    }
+
+    Alert.alert(
+      "Unlink Wallet",
+      `Are you sure you want to remove this ${provider} wallet?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Unlink",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await walletApi.unlinkWallet(walletId);
+              await fetchWallets();
+            } catch (err: any) {
+              Alert.alert(
+                "Error",
+                err.response?.data?.message || "Failed to unlink wallet."
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const getProviderBadge = (provider: string) => {
+    switch (provider) {
+      case "MPESA":
+        return { label: "M-Pesa", bg: "bg-green-600", icon: "cellphone" };
+      case "MTN_MOMO":
+        return { label: "MTN MoMo", bg: "bg-yellow-500", icon: "wallet" };
+      default:
+        return { label: "PanWallet Internal", bg: "bg-blue-600", icon: "shield-check" };
     }
   };
 
@@ -218,124 +160,273 @@ export default function WalletsScreen() {
       {/* Header */}
       <View
         style={{ borderBottomColor: isDark ? "#1E293B" : "#E2E8F0" }}
-        className="px-6 py-4 flex-row items-center justify-between border-b"
+        className="px-6 pt-4 pb-6 border-b flex-row items-center justify-between"
       >
         <View>
+          <Text
+            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+            className="text-xs font-semibold uppercase tracking-wider"
+          >
+            Overview
+          </Text>
           <Text
             style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
             className="text-2xl font-bold"
           >
             My Wallets
           </Text>
-          <Text
-            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
-            className="text-xs mt-0.5"
-          >
-            {wallets.length} wallet{wallets.length !== 1 ? "s" : ""} linked
-          </Text>
         </View>
-
-        <TouchableOpacity
-          className="w-10 h-10 rounded-full bg-[#F5A623] items-center justify-center shadow-sm"
-          onPress={() => router.push("/(app)/wallets/link")}
-          activeOpacity={0.8}
-        >
-          <Feather name="plus" size={20} color="#0A1628" />
-        </TouchableOpacity>
+        <ThemeToggle />
       </View>
 
-      <ScrollView
-        className="flex-1 px-6 pt-6"
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={["#F5A623"]}
-            tintColor="#F5A623"
-          />
-        }
-      >
-        {isLoading && !refreshing ? (
-          <ActivityIndicator color="#F5A623" size="large" className="mt-12" />
-        ) : wallets.length === 0 ? (
-          <View className="items-center py-16">
-            <View
-              style={{ backgroundColor: isDark ? "#1E293B" : "#F1F5F9" }}
-              className="w-16 h-16 rounded-full items-center justify-center mb-4"
-            >
-              <Feather
-                name="credit-card"
-                size={28}
-                color={isDark ? "#94A3B8" : "#64748B"}
-              />
+      <ScrollView className="flex-1 px-6 pt-6">
+        {/* Total Balance Card */}
+        <Card variant="elevated" padding="lg" className="mb-6 bg-indigo-900/40">
+          <Text className="text-xs font-medium text-indigo-200 uppercase tracking-wider mb-1">
+            Total Aggregate Balance
+          </Text>
+          <Text className="text-3xl font-extrabold text-white mb-4">
+            ${totalBalance.toFixed(2)} USD
+          </Text>
+
+          <TouchableOpacity
+            onPress={() => {
+              setErrorMessage(null);
+              setShowLinkModal(true);
+            }}
+            className="bg-amber-500 py-3 rounded-xl items-center flex-row justify-center"
+            activeOpacity={0.8}
+          >
+            <Feather name="plus-circle" size={18} color="#0A1628" />
+            <Text className="text-slate-950 font-bold ml-2 text-sm">
+              Link New Provider Wallet
+            </Text>
+          </TouchableOpacity>
+        </Card>
+
+        {/* Linked Wallets List */}
+        <Text
+          style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+          className="text-xs font-semibold mb-3 uppercase tracking-wider"
+        >
+          Linked Accounts ({wallets.length})
+        </Text>
+
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#F5A623" className="my-8" />
+        ) : (
+          wallets.map((wallet) => {
+            const badge = getProviderBadge(wallet.provider);
+            const isInternal = wallet.provider === "PANWALLET_INTERNAL";
+
+            return (
+              <View
+                key={wallet.id}
+                style={{
+                  backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+                  borderColor: isDark ? "#334155" : "#E2E8F0",
+                }}
+                className="p-4 rounded-2xl border mb-4 flex-row justify-between items-center"
+              >
+                <View className="flex-row items-center flex-1 mr-3">
+                  <View
+                    className={`w-10 h-10 rounded-xl ${badge.bg} items-center justify-center mr-3`}
+                  >
+                    <MaterialCommunityIcons
+                      name={badge.icon as any}
+                      size={20}
+                      color="#FFFFFF"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                      className="font-bold text-sm"
+                    >
+                      {badge.label}
+                    </Text>
+                    <Text
+                      style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                      className="text-xs"
+                    >
+                      {wallet.walletNumber || "Primary Wallet"}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="items-end">
+                  <Text
+                    style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                    className="font-bold text-base"
+                  >
+                    {wallet.currency} {parseFloat(wallet.balance || "0").toFixed(2)}
+                  </Text>
+
+                  <View className="flex-row items-center mt-2 space-x-2">
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedWalletId(wallet.id);
+                        setErrorMessage(null);
+                        setShowTopUpModal(true);
+                      }}
+                      className="bg-amber-500/20 px-3 py-1 rounded-lg"
+                    >
+                      <Text className="text-amber-500 font-bold text-xs">
+                        Top Up
+                      </Text>
+                    </TouchableOpacity>
+
+                    {!isInternal && (
+                      <TouchableOpacity
+                        onPress={() =>
+                          handleUnlinkWallet(wallet.id, wallet.provider)
+                        }
+                        className="bg-red-500/10 px-2 py-1 rounded-lg"
+                      >
+                        <Feather name="trash-2" size={14} color="#EF4444" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              </View>
+            );
+          })
+        )}
+      </ScrollView>
+
+      {/* Top Up Modal */}
+      <Modal visible={showTopUpModal} transparent animationType="slide">
+        <View className="flex-1 bg-black/60 justify-end">
+          <View
+            style={{ backgroundColor: isDark ? "#0A1628" : "#FFFFFF" }}
+            className="p-6 rounded-t-3xl border-t border-slate-700/50"
+          >
+            <View className="flex-row justify-between items-center mb-4">
+              <Text
+                style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                className="text-xl font-bold"
+              >
+                Top Up Wallet
+              </Text>
+              <TouchableOpacity onPress={() => setShowTopUpModal(false)}>
+                <Feather
+                  name="x"
+                  size={24}
+                  color={isDark ? "#94A3B8" : "#64748B"}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <Input
+              label="Amount (USD)"
+              placeholder="0.00"
+              keyboardType="decimal-pad"
+              value={topUpAmount}
+              onChangeText={(text) => {
+                setTopUpAmount(text);
+                if (errorMessage) setErrorMessage(null);
+              }}
+              error={errorMessage || undefined}
+            />
+
+            <Button
+              title="Confirm Top Up"
+              variant="primary"
+              size="lg"
+              loading={isSubmitting}
+              onPress={handleTopUp}
+              disabled={!topUpAmount || isSubmitting}
+              style={{ marginTop: 16 }}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Link Wallet Modal */}
+      <Modal visible={showLinkModal} transparent animationType="slide">
+        <View className="flex-1 bg-black/60 justify-end">
+          <View
+            style={{ backgroundColor: isDark ? "#0A1628" : "#FFFFFF" }}
+            className="p-6 rounded-t-3xl border-t border-slate-700/50"
+          >
+            <View className="flex-row justify-between items-center mb-4">
+              <Text
+                style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                className="text-xl font-bold"
+              >
+                Link Provider Wallet
+              </Text>
+              <TouchableOpacity onPress={() => setShowLinkModal(false)}>
+                <Feather
+                  name="x"
+                  size={24}
+                  color={isDark ? "#94A3B8" : "#64748B"}
+                />
+              </TouchableOpacity>
             </View>
 
             <Text
-              style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
-              className="font-bold text-lg mb-1"
-            >
-              No wallets yet
-            </Text>
-
-            <Text
               style={{ color: isDark ? "#94A3B8" : "#64748B" }}
-              className="text-xs text-center mb-8 leading-5"
+              className="text-xs font-semibold mb-2 uppercase"
             >
-              Link your M-Pesa or MTN MoMo wallet to start making transactions.
+              Select Provider
             </Text>
+            <View className="flex-row space-x-3 mb-4">
+              {(["MPESA", "MTN_MOMO"] as ProviderType[]).map((prov) => (
+                <TouchableOpacity
+                  key={prov}
+                  onPress={() => setLinkProvider(prov)}
+                  style={{
+                    backgroundColor:
+                      linkProvider === prov
+                        ? "#F5A623"
+                        : isDark
+                        ? "#1E293B"
+                        : "#F1F5F9",
+                  }}
+                  className="flex-1 py-3 rounded-xl items-center"
+                >
+                  <Text
+                    style={{
+                      color:
+                        linkProvider === prov
+                          ? "#0A1628"
+                          : isDark
+                          ? "#FFFFFF"
+                          : "#0F172A",
+                    }}
+                    className="font-bold text-xs"
+                  >
+                    {prov === "MPESA" ? "M-Pesa" : "MTN MoMo"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Input
+              label="Wallet / Mobile Number"
+              placeholder="+254 7XX XXX XXX"
+              keyboardType="phone-pad"
+              value={linkPhoneNumber}
+              onChangeText={(text) => {
+                setLinkPhoneNumber(text);
+                if (errorMessage) setErrorMessage(null);
+              }}
+              error={errorMessage || undefined}
+            />
 
             <Button
-              title="Link a Wallet"
+              title="Link Wallet Account"
               variant="primary"
-              size="md"
-              fullWidth={false}
-              onPress={() => router.push("/(app)/wallets/link")}
+              size="lg"
+              loading={isSubmitting}
+              onPress={handleLinkWallet}
+              disabled={!linkPhoneNumber || isSubmitting}
+              style={{ marginTop: 16 }}
             />
           </View>
-        ) : (
-          <>
-            {wallets.map((wallet) => (
-              <WalletDetailCard
-                key={wallet.id}
-                wallet={wallet}
-                onUnlink={handleUnlink}
-              />
-            ))}
-
-            {/* Link another wallet card */}
-            {wallets.length < 3 && (
-              <TouchableOpacity
-                style={{
-                  borderColor: isDark ? "#334155" : "#CBD5E1",
-                  backgroundColor: isDark ? "#0F172A" : "#FFFFFF",
-                }}
-                className="border-2 border-dashed rounded-2xl p-6 items-center mb-8"
-                onPress={() => router.push("/(app)/wallets/link")}
-                activeOpacity={0.8}
-              >
-                <View
-                  style={{ backgroundColor: isDark ? "#1E293B" : "#F1F5F9" }}
-                  className="w-10 h-10 rounded-full items-center justify-center mb-2"
-                >
-                  <Feather
-                    name="plus"
-                    size={20}
-                    color={isDark ? "#94A3B8" : "#64748B"}
-                  />
-                </View>
-
-                <Text
-                  style={{ color: isDark ? "#94A3B8" : "#64748B" }}
-                  className="font-medium text-xs"
-                >
-                  Link another wallet
-                </Text>
-              </TouchableOpacity>
-            )}
-          </>
-        )}
-      </ScrollView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

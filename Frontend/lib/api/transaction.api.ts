@@ -20,6 +20,7 @@ export interface TransferQuote {
 }
 
 export interface Transaction {
+  type: string;
   currency: ReactNode;
   senderCurrency: ReactNode;
   id: string;

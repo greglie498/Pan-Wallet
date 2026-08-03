@@ -11,7 +11,7 @@ import {
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, Badge, ThemeToggle } from "@/components/ui";
-import { useTransactionStore } from "@/lib/store";
+import { useTransactionStore } from "@/lib/store/transaction.store";
 import { useTheme } from "@/lib/store/theme.store";
 import { Transaction } from "@/lib/api/transaction.api";
 import { Feather } from "@expo/vector-icons";
@@ -138,7 +138,7 @@ export default function TransactionsScreen() {
         backgroundColor={isDark ? "#0A1628" : "#F8FAFC"}
       />
 
-      {/* Header with ThemeToggle */}
+      {/* Header */}
       <View
         style={{ borderBottomColor: isDark ? "#1E293B" : "#E2E8F0" }}
         className="px-6 py-4 flex-row items-center justify-between border-b"

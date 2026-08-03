@@ -218,7 +218,6 @@ const useAuthStore = create<AuthState>((set) => ({
       router.replace("/(auth)/welcome");
     }
   },
-
   clearError: () => set({ error: null }),
 }));
 

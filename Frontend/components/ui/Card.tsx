@@ -26,30 +26,34 @@ export function Card({
     lg: "p-6",
   }[padding];
 
-  // Dynamic colors based on isDark state
+  // Helper to check if a custom background color is passed in className
+  const hasCustomBg = /\bbg-/.test(className);
+
   const getVariantStyle = () => {
+    const baseBg = isDark ? "#1E293B" : "#FFFFFF";
+
     switch (variant) {
       case "elevated":
         return {
-          backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+          ...(hasCustomBg ? {} : { backgroundColor: baseBg }),
           borderColor: isDark ? "#334155" : "#E2E8F0",
           borderWidth: 1,
           shadowColor: "#000000",
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: isDark ? 0.3 : 0.06,
-          shadowRadius: 10,
-          elevation: isDark ? 2 : 4,
+          shadowOpacity: isDark ? 0.3 : 0.08,
+          shadowRadius: 12,
+          elevation: isDark ? 3 : 5,
         };
       case "outlined":
         return {
-          backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+          ...(hasCustomBg ? {} : { backgroundColor: baseBg }),
           borderColor: isDark ? "#334155" : "#CBD5E1",
           borderWidth: 1,
         };
       case "default":
       default:
         return {
-          backgroundColor: isDark ? "#1E293B" : "#FFFFFF",
+          ...(hasCustomBg ? {} : { backgroundColor: baseBg }),
           borderColor: isDark ? "#334155" : "#F1F5F9",
           borderWidth: 1,
         };

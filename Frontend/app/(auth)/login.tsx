@@ -127,7 +127,7 @@ export default function LoginScreen() {
                                 }
                             />
 
-                            {/* Password */}
+                            Password
                             <Input
                                 label="Password"
                                 placeholder="Enter your password"

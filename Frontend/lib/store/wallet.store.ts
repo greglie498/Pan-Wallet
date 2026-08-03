@@ -1,109 +1,46 @@
 import { create } from "zustand";
-import { walletApi, Wallet } from "../api/wallet.api";
+import { walletApi, Wallet, LinkWalletPayload } from "@/lib/api/wallet.api";
 
 interface WalletState {
   wallets: Wallet[];
   isLoading: boolean;
   error: string | null;
-  lastFetched: Date | null;
-
   fetchWallets: () => Promise<void>;
-  forceRefresh: () => Promise<void>;
-  linkWallet: (provider: "MPESA" | "MTN_MOMO", walletNumber: string) => Promise<void>;
+  topUpWallet: (walletId: string, amount: number) => Promise<void>;
+  linkWallet: (payload: LinkWalletPayload) => Promise<void>;
   unlinkWallet: (walletId: string) => Promise<void>;
-  clearError: () => void;
-  reset: () => void;
 }
 
-const useWalletStore = create<WalletState>((set, get) => ({
-  // ── Initial state ──────────────────────────────────────────────
+export const useWalletStore = create<WalletState>((set, get) => ({
   wallets: [],
   isLoading: false,
   error: null,
-  lastFetched: null,
 
-  // ── Fetch wallets ──────────────────────────────────────────────
   fetchWallets: async () => {
-    // Skip if fetched in last 30 seconds
-    const { lastFetched } = get();
-    if (lastFetched && Date.now() - lastFetched.getTime() < 30000) {
-      return;
-    }
-
     set({ isLoading: true, error: null });
     try {
-      const wallets = await walletApi.list();
-      set({ wallets, isLoading: false, lastFetched: new Date() });
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch wallets.";
-      set({ error: message, isLoading: false });
-    }
-  },
-
-  forceRefresh: async () => {
-    set({ isLoading: true, error: null, lastFetched: null });
-    try {
-      const wallets = await walletApi.list();
-      set({ wallets, isLoading: false, lastFetched: new Date() });
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to fetch wallets.";
-      set({ error: message, isLoading: false });
-    }
-  },
-
-  // ── Link wallet ────────────────────────────────────────────────
-  linkWallet: async (provider, walletNumber) => {
-    set({ isLoading: true, error: null });
-    try {
-      const newWallet = await walletApi.link({ provider, walletNumber });
-      set((state) => ({
-        wallets: [...state.wallets, newWallet],
+      const data = await walletApi.list();
+      set({ wallets: data, isLoading: false });
+    } catch (err: any) {
+      set({
+        error: err.response?.data?.message || "Failed to fetch wallets",
         isLoading: false,
-      }));
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to link wallet.";
-      set({ error: message, isLoading: false });
-      throw error;
+      });
     }
   },
 
-  // ── Unlink wallet ──────────────────────────────────────────────
-  unlinkWallet: async (walletId) => {
-    set({ isLoading: true, error: null });
-    try {
-      await walletApi.unlink(walletId);
-      set((state) => ({
-        wallets: state.wallets.filter((w) => w.id !== walletId),
-        isLoading: false,
-      }));
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to unlink wallet.";
-      set({ error: message, isLoading: false });
-      throw error;
-    }
+  topUpWallet: async (walletId: string, amount: number) => {
+    await walletApi.topUp(walletId, amount);
+    await get().fetchWallets();
   },
 
-  // ── Clear error ────────────────────────────────────────────────
-  clearError: () => set({ error: null }),
+  linkWallet: async (payload: LinkWalletPayload) => {
+    await walletApi.link(payload);
+    await get().fetchWallets();
+  },
 
-  // ── Reset — called on logout ───────────────────────────────────
-  reset: () =>
-    set({
-      wallets: [],
-      isLoading: false,
-      error: null,
-      lastFetched: null,
-    }),
+  unlinkWallet: async (walletId: string) => {
+    await walletApi.unlink(walletId);
+    await get().fetchWallets();
+  },
 }));
-
-export { useWalletStore };
