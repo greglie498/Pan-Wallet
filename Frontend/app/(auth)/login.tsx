@@ -18,6 +18,7 @@ import PhoneInput from "@/components/auth/PhoneInput";
 import AuthCard from "@/components/auth/AuthCard";
 import AuthFooter from "@/components/auth/AuthFooter";
 
+
 const COUNTRY_CODES = [
   { code: "+254", flag: "🇰🇪", country: "Kenya" },
   { code: "+256", flag: "🇺🇬", country: "Uganda" },
@@ -68,15 +69,14 @@ export default function LoginScreen() {
 
     return (
     <SafeAreaView className="flex-1 bg-primary">
+        <KeyboardAvoidingView>
       <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    
         <ScrollView
-          className="flex-1"
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
+            className= "flex-1"
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 80, }}
+            keyboardDismissMode="none"
+           keyboardShouldPersistTaps="always"
         >
           {/* Header */}
           <View className="px-6 pt-4 pb-6">
@@ -101,53 +101,55 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-        <View className="px-6 flex-1">
+        <View className="px-6">
             <AuthCard>
                 <Text className="text-accent uppercase tracking-[3px] text-xs font-semibold mt-2">
                     ONE WALLET. EVERY NETWORK.
                 </Text>
-                <PhoneInput
-                        selectedCountry={selectedCode}
-                        onCountryChange={setSelectedCode}
-                        phoneNumber={phoneNumber}
-                        onPhoneChange={(text) => {
-                            setPhoneNumber(text);
-                            setValidationError("");
-                        }}
-                        leftIcon={
-                            <Feather
-                                name="phone"
-                                size={18}
-                                color="#94A3B8"
+                    <View>
+                        <PhoneInput
+                                selectedCountry={selectedCode}
+                                onCountryChange={setSelectedCode}
+                                phoneNumber={phoneNumber}
+                                onPhoneChange={(text) => {
+                                    setPhoneNumber(text);
+                                    setValidationError("");
+                                }}
+                                leftIcon={
+                                    <Feather
+                                        name="phone"
+                                        size={18}
+                                        color="#94A3B8"
+                                    />
+                                }
                             />
-                        }
-                    />
 
-                    {/* Password */}
-                    <Input
-                        label="Password"
-                        placeholder="Enter your password"
-                        secureTextEntry={!showPassword}
-                        value={password}
-                        onChangeText={setPassword}
-                        rightIcon={
-                            <Feather
-                                name={showPassword ? "eye-off" : "eye"}
-                                size={20}
-                                color="#94A3B8"
+                            {/* Password */}
+                            <Input
+                                label="Password"
+                                placeholder="Enter your password"
+                                secureTextEntry={!showPassword}
+                                value={password}
+                                onChangeText={setPassword}
+                                rightIcon={
+                                    <Feather
+                                        name={showPassword ? "eye-off" : "eye"}
+                                        size={20}
+                                        color="#94A3B8"
+                                    />
+                                }
+                                onRightIconPress={() =>
+                                    setShowPassword(!showPassword)
+                                }
+                                leftIcon={
+                                    <Feather
+                                        name="lock"
+                                        size={18}
+                                        color="#94A3B8"
+                                    />
+                                }
                             />
-                        }
-                        onRightIconPress={() =>
-                            setShowPassword(!showPassword)
-                        }
-                        leftIcon={
-                            <Feather
-                                name="lock"
-                                size={18}
-                                color="#94A3B8"
-                            />
-                        }
-                    />
+                        </View>
 
                     <View className="items-end mb-6">
                         <TouchableOpacity>
@@ -167,7 +169,8 @@ export default function LoginScreen() {
                     )}
 
                     <Button
-                    title= "Sign In"
+                        title="Sign In"
+                        onPress={handleSubmit}
                     />
 
                     <AuthFooter
@@ -177,8 +180,8 @@ export default function LoginScreen() {
                     />
 
                     <Text className="text-gray-500 text-xs text-center mt-6">
-                    By continuing, you agree to our Terms of Service{"\n"}
-                    and Privacy Policy
+                        By continuing, you agree to our Terms of Service{"\n"}
+                        and Privacy Policy
                     </Text>
             </AuthCard>
         </View>

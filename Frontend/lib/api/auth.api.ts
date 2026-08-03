@@ -1,4 +1,4 @@
-import { apiClient } from "./client";
+import { apiClient, adminClient } from "./client";
 
 export interface RegisterPayload {
   phoneNumber: string;
@@ -59,6 +59,11 @@ export const authApi = {
     return response.data.data;
   },
 
+    adminLogin: async (payload: AdminLoginPayload): Promise<AdminAuthResponse> => {
+      const response = await adminClient.post("/admin/login", payload);
+      return response.data.data;
+    },
+
   firebaseLogin: async (payload: FirebaseAuthPayload): Promise<AuthResponse> => {
     const response = await apiClient.post("/auth/firebase", payload);
     return response.data.data;
@@ -68,8 +73,4 @@ export const authApi = {
     await apiClient.post("/auth/logout", { refreshToken });
   },
 
-  adminLogin: async (payload: AdminLoginPayload): Promise<AdminAuthResponse> => {
-    const response = await apiClient.post("/admin/login", payload);
-    return response.data.data;
-  },
 };

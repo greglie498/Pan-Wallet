@@ -225,7 +225,6 @@ export default function DashboardScreen() {
     (w) => w.provider === "PANWALLET_INTERNAL"
   );
 
-
   const totalBalance = wallets
     .filter((w) => w.provider === "PANWALLET_INTERNAL")
     .reduce((sum, w) => sum + parseFloat(w.balance), 0);

@@ -84,128 +84,130 @@ export default function RegisterScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-primary">
-        <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
-        <KeyboardAvoidingView
-            className="flex-1"
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-            <ScrollView
-            className="flex-1"
-            contentContainerStyle={{ flexGrow: 1 }}
-            keyboardShouldPersistTaps="handled"
-            >
-            {/* Header */}
-            <View className="px-6 pt-4 pb-6">
-               <Image
-                    source={require("@/assets/images/panwallet-logo-dark.png")}
-                    className="w-24 h-24 self-center mb-6"
-                    resizeMode="contain"
-                />
+            <KeyboardAvoidingView>
+                <StatusBar barStyle="light-content" backgroundColor="#0A1628" />
+        
+                <ScrollView
+                className="flex-1"
+                contentContainerStyle={{ flexGrow: 1 }}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                >
+                {/* Header */}
+                <View className="px-6 pt-4 pb-6">
+                <Image
+                        source={require("@/assets/images/panwallet-logo-dark.png")}
+                        className="w-24 h-24 self-center mb-6"
+                        resizeMode="contain"
+                    />
 
-                <Text className="text-white text-3xl font-bold text-center">
-                    Create Your Wallet
-                </Text>
+                    <Text className="text-white text-3xl font-bold text-center">
+                        Create Your Wallet
+                    </Text>
 
-                <Text className="text-slate-400 text-center mt-3 leading-6">
-                    Join thousands of users sending money across Africa securely.
-                </Text>
-            </View>
-
-            <View className="px-6 flex-1">
-                {/* Name field — register only */}
-                {mode === "register" && (
-                <Input
-                    label="Full Name"
-                    placeholder="Jane Wanjiru"
-                    value={name}
-                    onChangeText={setName}
-                    autoCapitalize="words"
-                />
-                )}
-
-                {/* Phone number */}
-                <PhoneInput
-                    selectedCountry={selectedCode}
-                    onCountryChange={setSelectedCode}
-                    phoneNumber={phoneNumber}
-                    onPhoneChange={(text) => {
-                        setPhoneNumber(text);
-                        setValidationError("");
-                    }}
-                    leftIcon={
-                        <Feather
-                            name="phone"
-                            size={18}
-                            color="#94A3B8"
-                        />
-                    }
-                />
-
-                {/* Password */}
-                 <Input
-                    label="Confirm Password"
-                    secureTextEntry={!showConfirmPassword}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    rightIcon={
-                        <Feather
-                            name={showConfirmPassword ? "eye-off" : "eye"}
-                            size={20}
-                            color="#94A3B8"
-                        />
-                    }
-                    onRightIconPress={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                    }
-                    leftIcon={
-                        <Feather
-                            name="lock"
-                            size={18}
-                            color="#94A3B8"
-                        />
-                    }
-                />
-
-                {/* Confirm password — register only */}
-                {mode === "register" && (
-                <Input
-                    label="Confirm Password"
-                    placeholder="Re-enter password"
-                    secureTextEntry
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                />
-                )}
-
-                {/* Error */}
-                {(validationError || error) && (
-                <View className="bg-red-900/30 border border-red-700 rounded-xl p-3 mb-4">
-                    <Text className="text-red-400 text-sm">
-                    {validationError || error}
+                    <Text className="text-slate-400 text-center mt-3 leading-6">
+                        Join thousands of users sending money across Africa securely.
                     </Text>
                 </View>
-                )}
 
-                <Button
-                    title="Create Your Wallet"
-                    size="lg"
-                    loading={isLoading}
-                    rightIcon={
-                        <Feather
-                            name="arrow-right"
-                            size={18}
-                            color="#0A1628"
-                        />
-                    }
-                    onPress={handleSubmit}
-                />
-                <AuthFooter
-                    text="Already have an account?"
-                    action="Sign In"
-                    onPress={() => router.replace("/(auth)/login")}
-                />
-            </View>
-            </ScrollView>
+            
+                <View className="px-6">
+                        <View>
+                            {/* Name field — register only */}
+                            {mode === "register" && (
+                            <Input
+                                label="Full Name"
+                                placeholder="Jane Wanjiru"
+                                value={name}
+                                onChangeText={setName}
+                                autoCapitalize="words"
+                            />
+                            )}
+
+                            {/* Phone number */}
+                            <PhoneInput
+                                selectedCountry={selectedCode}
+                                onCountryChange={setSelectedCode}
+                                phoneNumber={phoneNumber}
+                                onPhoneChange={(text) => {
+                                    setPhoneNumber(text);
+                                    setValidationError("");
+                                }}
+                                leftIcon={
+                                    <Feather
+                                        name="phone"
+                                        size={18}
+                                        color="#94A3B8"
+                                    />
+                                }
+                            />
+
+                            {/* Password */}
+                            <Input
+                                label="Confirm Password"
+                                secureTextEntry={!showConfirmPassword}
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                rightIcon={
+                                    <Feather
+                                        name={showConfirmPassword ? "eye-off" : "eye"}
+                                        size={20}
+                                        color="#94A3B8"
+                                    />
+                                }
+                                onRightIconPress={() =>
+                                    setShowConfirmPassword(!showConfirmPassword)
+                                }
+                                leftIcon={
+                                    <Feather
+                                        name="lock"
+                                        size={18}
+                                        color="#94A3B8"
+                                    />
+                                }
+                            />
+
+                            {/* Confirm password — register only */}
+                            {mode === "register" && (
+                            <Input
+                                label="Confirm Password"
+                                placeholder="Re-enter password"
+                                secureTextEntry
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                            />
+                            )}
+                        </View>
+                    
+                    {/* Error */}
+                    {(validationError || error) && (
+                    <View className="bg-red-900/30 border border-red-700 rounded-xl p-3 mb-4">
+                        <Text className="text-red-400 text-sm">
+                        {validationError || error}
+                        </Text>
+                    </View>
+                    )}
+
+                    <Button
+                        title="Create Your Wallet"
+                        size="lg"
+                        loading={isLoading}
+                        rightIcon={
+                            <Feather
+                                name="arrow-right"
+                                size={18}
+                                color="#0A1628"
+                            />
+                        }
+                        onPress={handleSubmit}
+                    />
+                    <AuthFooter
+                        text="Already have an account?"
+                        action="Sign In"
+                        onPress={() => router.replace("/(auth)/login")}
+                    />
+                </View>
+                </ScrollView>
         </KeyboardAvoidingView>
         </SafeAreaView>
     );

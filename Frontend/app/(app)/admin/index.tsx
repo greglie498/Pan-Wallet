@@ -3,7 +3,8 @@ View,
 ScrollView,
 RefreshControl,
 StatusBar,
-ActivityIndicator
+ActivityIndicator,
+TextInput
 } from "react-native";
 import {
 useEffect,
@@ -60,7 +61,6 @@ export default function AdminDashboardScreen(){
             <StatusBar barStyle="light-content" />
             <ScrollView>
                 <AdminHeader logout={logout} />
-
                 <View className="-mt-5 px-6">
                     <View className="flex-row flex-wrap">
                         <AdminStatCard

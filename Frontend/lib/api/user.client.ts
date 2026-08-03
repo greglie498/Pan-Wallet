@@ -1,9 +1,9 @@
 import {apiClient} from "./client";
-import {userTokenStorage} from "./token.storage";
+import {tokenStorage } from "@/lib/storage/token.storage";
 
 apiClient.interceptors.request.use(
     async(config)=>{
-        const token = await userTokenStorage.getAccessToken();
+        const token = await tokenStorage.getAccessToken();
         if(token){
             config.headers.Authorization = `Bearer ${token}`;
         }

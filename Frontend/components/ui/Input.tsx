@@ -59,8 +59,11 @@ export function Input({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           editable={editable}
+          returnKeyType="next"
+          blurOnSubmit={false}
           {...props}
         />
+
 
         {rightIcon && (
           <TouchableOpacity

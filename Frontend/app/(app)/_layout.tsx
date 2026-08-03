@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthStore } from "@/lib/store";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/lib/store/theme.store";
+import { Redirect } from "expo-router";
 
 function TabIcon({
   name,
@@ -29,11 +30,14 @@ export default function AppLayout() {
   const { user, adminData } = useAuthStore();
   const isAdmin = !!adminData;
   const { isDark } = useTheme();
+  const { isAuthenticated, isInitializing }=useAuthStore();
 
-  // Guard — redirect to welcome if not authenticated
-  //if (!isAuthenticated) {
-  //  return <Redirect href="/(auth)/welcome" />;
-  //}
+  if(isInitializing){
+    return null;
+  }
+  if(!isAuthenticated){
+  return <Redirect href="/(auth)/welcome"/>
+  }
 
   return (
     <Tabs

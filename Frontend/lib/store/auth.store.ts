@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { authApi } from "../api/auth.api";
-import { tokenStorage, setAuthFailureHandler } from "../api/client";
+import {  setAuthFailureHandler } from "../api/client";
 import { useWalletStore } from "./wallet.store";
+import { tokenStorage, adminTokenStorage } from "@/lib/storage/token.storage";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 
@@ -54,29 +55,58 @@ const useAuthStore = create<AuthState>((set) => ({
   error: null,
 
   // ── Initialize ─────────────────────────────────────────────────
-  initialize: async () => {
-    try {
-      const accessToken = await tokenStorage.getAccessToken();
-      if (accessToken) {
-        const isAdmin = await SecureStore.getItemAsync(ADMIN_KEY);
-        const adminDataStr = await SecureStore.getItemAsync(ADMIN_DATA_KEY);
-        const adminData = adminDataStr ? JSON.parse(adminDataStr) : null;
-        const userDataStr = await SecureStore.getItemAsync(USER_DATA_KEY);
-        const user = userDataStr ? JSON.parse(userDataStr) as User : null;
-        set({
-          user,
-          isAuthenticated: true,
-          isAdmin: isAdmin === "true",
-          adminData,
-        });
-      }
-    } catch {
-      await tokenStorage.clearTokens();
-      set({ isAuthenticated: false, isAdmin: false });
-    } finally {
-      set({ isInitializing: false });
+  initialize: async()=>{
+  try{
+    const userToken = await tokenStorage.getAccessToken();
+    const adminToken = await adminTokenStorage.getAccessToken();
+
+    const accessToken = userToken || adminToken;
+
+    const userDataStr = await SecureStore.getItemAsync(USER_DATA_KEY);
+
+    if(adminToken){
+      const adminDataStr = await SecureStore.getItemAsync(ADMIN_DATA_KEY);
+      set({
+        isAuthenticated:true,
+        isAdmin:true,
+        adminData: adminDataStr ? (JSON.parse(adminDataStr) as AdminData) : null,
+        user:null,
+      });
+      return;
     }
-  },
+
+    if(!userToken){
+      set({
+        isAuthenticated:false,
+        user: userDataStr ? (JSON.parse(userDataStr) as User) : null,
+        adminData:null,
+        isAdmin:false
+      });
+      return;
+    }
+    
+    set({
+      isAuthenticated:true,
+      isAdmin:false,
+      user: null,
+      adminData:null
+    });
+  }catch(error){
+    console.log(error);
+    await tokenStorage.clearTokens();
+    await adminTokenStorage.clearTokens();
+    set({
+      isAuthenticated:false,
+      user:null,
+      adminData:null,
+      isAdmin:false
+    });
+  }finally{
+    set({
+      isInitializing:false
+    });
+  }
+},
 
   // ── Register ───────────────────────────────────────────────────
   registerWithPassword: async (phoneNumber, name, password) => {
@@ -136,7 +166,7 @@ const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const result = await authApi.adminLogin({ username, password });
-      await tokenStorage.setTokens(
+      await adminTokenStorage.setTokens(
         result.tokens.accessToken,
         result.tokens.refreshToken
       );

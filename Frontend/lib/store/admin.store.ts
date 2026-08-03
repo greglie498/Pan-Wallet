@@ -1,25 +1,28 @@
 import { create } from "zustand";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+    adminTokenStorage
+} from "@/lib/storage/token.storage";
 import { adminApi } from "@/lib/api/admin.api";
 
+
 interface Admin {
-    id: string;
-    username: string;
-    email: string;
-    role: string;
+    id:string;
+    username:string;
+    email:string;
+    role:string;
 }
 
 interface AdminStore {
-    admin: Admin | null;
-    accessToken: string | null;
-    refreshToken: string | null;
-    
-    login: (
+    admin:Admin|null;
+    accessToken:string|null;
+    refreshToken:string|null;
+
+    login(
         username:string,
         password:string
-    ) => Promise<void>;
-    logout:()=>Promise<void>;
-    initialize:()=>Promise<void>;
+    ):Promise<void>;
+    logout():Promise<void>;
+    initialize():Promise<void>;
 }
 
 export const useAdminStore = create<AdminStore>((set)=>({
@@ -27,41 +30,26 @@ export const useAdminStore = create<AdminStore>((set)=>({
     accessToken:null,
     refreshToken:null,
 
-    login: async(username,password)=>{
-        const response =
-            await adminApi.login({
-                username,
-                password
-            });
+    login:async(username,password)=>{
+        const response = await adminApi.login( username, password );
 
-        const {
-            admin,
-            tokens
-        } = response;
+        const { admin, tokens } = response;
 
-        await AsyncStorage.setItem(
-            "adminAccessToken",
-            tokens.accessToken
-        );
-
-        await AsyncStorage.setItem(
-            "adminRefreshToken",
+        // STORE IN SECURE STORE
+        await adminTokenStorage.setTokens(
+            tokens.accessToken,
             tokens.refreshToken
         );
 
         set({
             admin,
-            accessToken:tokens.accessToken,
-            refreshToken:tokens.refreshToken
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken
         });
     },
 
-
     logout:async()=>{
-        await AsyncStorage.multiRemove([
-            "adminAccessToken",
-            "adminRefreshToken"
-        ]);
+        await adminTokenStorage.clearTokens();
 
         set({
             admin:null,
@@ -71,16 +59,8 @@ export const useAdminStore = create<AdminStore>((set)=>({
     },
 
     initialize:async()=>{
-        const accessToken =
-            await AsyncStorage.getItem(
-                "adminAccessToken"
-            );
-
-        const refreshToken =
-            await AsyncStorage.getItem(
-                "adminRefreshToken"
-            );
-
+        const accessToken = await adminTokenStorage.getAccessToken();
+        const refreshToken = await adminTokenStorage.getRefreshToken();
         if(accessToken){
             set({
                 accessToken,

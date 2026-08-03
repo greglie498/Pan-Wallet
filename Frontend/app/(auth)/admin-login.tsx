@@ -7,6 +7,8 @@ import {
 import {useState} from "react";
 import {router} from "expo-router";
 import {useAdminStore} from "@/lib/store/admin.store";
+import { KeyboardAvoidingView } from "react-native";
+import { ScrollView } from "react-native";
 
 
 export default function AdminScreen(){
@@ -32,25 +34,32 @@ export default function AdminScreen(){
         Admin Portal
       </Text>
 
-
-      <TextInput
-      placeholder="Username"
-      value={username}
-      onChangeText={setUsername}
-      className="border rounded-xl p-4 mb-4"
-      />
-
-      <TextInput
-      placeholder="Password"
-      secureTextEntry
-      value={password}
-      onChangeText={setPassword}
-      className="border rounded-xl p-4 mb-6"
-      />
+      <KeyboardAvoidingView >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+        <View>
+          <TextInput
+            placeholder="Username"
+            value={username}
+            onChangeText={setUsername}
+            className="border rounded-xl p-4 mb-4"
+          />
+          <TextInput
+            placeholder="Password"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            className="border rounded-xl p-4 mb-6"
+          />
+        </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <TouchableOpacity
-      onPress={submit}
-      className="bg-primary p-4 rounded-xl"
+        onPress={submit}
+        className="bg-primary p-4 rounded-xl"
       >
         <Text className="text-white text-center font-bold">
           Login
