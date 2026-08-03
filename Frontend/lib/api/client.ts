@@ -4,23 +4,92 @@ import * as SecureStore from "expo-secure-store";
 // ── Constants ──────────────────────────────────────────────────────
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "https://gonad-atypical-lather.ngrok-free.dev/api/v1";
 
-const ACCESS_TOKEN_KEY = "panwallet_access_token";
-const REFRESH_TOKEN_KEY = "panwallet_refresh_token";
+export const USER_ACCESS_TOKEN = "panwallet_access_token";
+export const USER_REFRESH_TOKEN ="panwallet_refresh_token";
+export const ADMIN_ACCESS_TOKEN = "panwallet_admin_access_token";
+export const ADMIN_REFRESH_TOKEN = "panwallet_admin_refresh_token";
 
 // ── Token storage helpers ──────────────────────────────────────────
-export const tokenStorage = {
-  getAccessToken: () => SecureStore.getItemAsync(ACCESS_TOKEN_KEY),
-  getRefreshToken: () => SecureStore.getItemAsync(REFRESH_TOKEN_KEY),
-
-  setTokens: async (accessToken: string, refreshToken: string) => {
-    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken);
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+export const userTokenStorage = {
+  getAccessToken: () =>
+    SecureStore.getItemAsync(
+        USER_ACCESS_TOKEN
+    ),
+  getRefreshToken: () =>
+    SecureStore.getItemAsync(
+      USER_REFRESH_TOKEN
+    ),
+  setTokens: async(
+    access:string,
+    refresh:string
+  )=>{
+    await SecureStore.setItemAsync(
+      USER_ACCESS_TOKEN,
+      access
+    );
+    await SecureStore.setItemAsync(
+      USER_REFRESH_TOKEN,
+      refresh
+    );
   },
 
-  clearTokens: async () => {
-    await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-    await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-  },
+  clearTokens:async()=>{
+      await SecureStore.deleteItemAsync(
+        USER_ACCESS_TOKEN
+      );
+
+      await SecureStore.deleteItemAsync(
+        USER_REFRESH_TOKEN
+      );
+    }
+
+};
+
+
+
+export const adminTokenStorage = {
+
+    getAccessToken: () =>
+        SecureStore.getItemAsync(
+            ADMIN_ACCESS_TOKEN
+        ),
+
+
+    getRefreshToken: () =>
+        SecureStore.getItemAsync(
+            ADMIN_REFRESH_TOKEN
+        ),
+
+
+    setTokens: async(
+        access:string,
+        refresh:string
+    )=>{
+
+        await SecureStore.setItemAsync(
+            ADMIN_ACCESS_TOKEN,
+            access
+        );
+
+        await SecureStore.setItemAsync(
+            ADMIN_REFRESH_TOKEN,
+            refresh
+        );
+
+    },
+
+
+    clearTokens:async()=>{
+
+        await SecureStore.deleteItemAsync(
+            ADMIN_ACCESS_TOKEN
+        );
+
+        await SecureStore.deleteItemAsync(
+            ADMIN_REFRESH_TOKEN
+        );
+
+    }
 };
 
 // ── Axios instance ─────────────────────────────────────────────────

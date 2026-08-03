@@ -1,4 +1,4 @@
-import { apiClient } from "./client";
+import { adminClient } from "./admin.client";
 
 export interface AdminStats {
     totalUsers: number;
@@ -50,8 +50,20 @@ export interface PaginatedResponse<T> {
 }
 
 export const adminApi = {
+    login: async(
+    username:string,
+    password:string
+    )=>{
+        const response =
+            await adminClient.post(
+                "/admin/login",
+                { username, password }
+            );
+        return response.data.data;
+    },
+
     getStats: async (): Promise<AdminStats> => {
-        const response = await apiClient.get("/admin/stats");
+        const response = await adminClient.get("/admin/stats");
         return response.data.data;
     },
 
@@ -59,7 +71,7 @@ export const adminApi = {
         page = 1,
         limit = 20
     ): Promise<{ users: AdminUser[]; total: number; pages: number}> => {
-        const response = await apiClient.get("/admin/users", {
+        const response = await adminClient.get("/admin/users", {
             params: { page, limit },
         });
         return response.data.data;
@@ -73,7 +85,7 @@ export const adminApi = {
         total: number;
         pages: number;
     }> => {
-        const response = await apiClient.get("/admin/transactions", {
+        const response = await adminClient.get("/admin/transactions", {
             params: { page, limit },
         });
         return response.data.data;

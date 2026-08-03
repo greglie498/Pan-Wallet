@@ -1,5 +1,28 @@
-import { Stack } from "expo-router";
+import {Stack, Redirect} from "expo-router";
+import {useAdminStore} from "@/lib/store/admin.store";
 
-export default function AdminLayout() {
-    return <Stack screenOptions={{ headerShown: false }} />
+
+export default function AdminLayout(){
+
+    const admin =
+        useAdminStore(
+            state=>state.admin
+        );
+
+    if(!admin){
+        return (
+            <Redirect
+                href="/admin"
+            />
+        );
+    }
+
+    return (
+        <Stack
+            screenOptions={{
+                headerShown:false
+            }}
+        />
+    );
+
 }
