@@ -25,32 +25,27 @@ class WalletService {
 
   async linkWallet(userId: string, input: LinkWalletInput): Promise<Wallet> {
     const provider = input.provider as WalletProvider;
-
     // Check 1 — Is this wallet number already linked to any account?
     const existingGlobal =
       await walletRepository.findByProviderAndWalletNumber(
         provider,
         input.walletNumber
       );
-
     if (existingGlobal) {
       throw new ConflictError(
         `This ${input.provider} number is already linked to an account.`
       );
     }
-
     // Check 2 — Does this user already have this provider linked?
     const existingUserProvider = await walletRepository.findByUserAndProvider(
       userId,
       provider
     );
-
     if (existingUserProvider) {
       throw new ConflictError(
         `You already have an ${input.provider} wallet linked to your account.`
       );
     }
-
     // All checks passed — create linked wallet
     try {
       return await walletRepository.create({
@@ -83,25 +78,20 @@ class WalletService {
     if (!wallet || wallet.userId !== userId) {
       throw new NotFoundError("Wallet");
     }
-
     if (wallet.status !== "ACTIVE") {
       throw new BadRequestError("Cannot top up a suspended or closed wallet.");
     }
-
     if (amount <= 0) {
       throw new BadRequestError("Top-up amount must be greater than zero.");
     }
-
     if (amount > 10000) {
       throw new BadRequestError(
         "Maximum top-up amount is $10,000 per transaction."
       );
     }
-
     const decimalAmount = new Prisma.Decimal(amount);
     return walletRepository.topUp(walletId, decimalAmount);
   }
-
   async unlinkWallet(walletId: string, userId: string): Promise<void> {
     const wallet = await walletRepository.findById(walletId);
 
@@ -114,7 +104,6 @@ class WalletService {
         "Your internal PanWallet cannot be unlinked."
       );
     }
-
     try {
       await walletRepository.delete(walletId);
     } catch (error) {

@@ -3,39 +3,57 @@ import { prisma } from "./infrastructure/database/prisma";
 import { logger } from "./config/logger";
 import { env } from "./config/env";
 
-async function startServer(): Promise<void> {
-    try{
-        await prisma.$connect();
-        logger.info("✅ Database connected");
+async function startServer() {
+  try {
+    await prisma.$connect();
 
-        const app = createApp();
+    logger.info("✅ Database connected");
 
-        const server = app.listen(env.PORT, () => {
-            logger.info(`🚀 Server running on port ${env.PORT} [${env.NODE_ENV}]`);
-        } );
+    const app = createApp();
 
-        const shutdown = async (signal: string): Promise <void> => {
-            logger.info(`${signal} received. shutting down gracefully...`);
+    const server = app.listen(env.PORT, "0.0.0.0", () => {
+      logger.info(
+        `🚀 Server running on port ${env.PORT} [${env.NODE_ENV}]`
+      );
+    });
 
-            server.close(async () => {
-                await prisma.$disconnect();
-                logger.info("Database disconnected. Process exiting.");
-                process.exit(0);
-            });
 
-            // Force-exit if shutdown takes too long
-            setTimeout(() => {
-                logger.error("Forced shutdown after timeout.");
-                process.exit(1);
-            }, 10000);
-        };
+    const shutdown = async (signal: string) => {
+      logger.info(`${signal} received. shutting down...`);
 
-        process.on("SIGTERM", () => void shutdown("SIGTERM"));
-        process.on("SIGINT", () => void shutdown("SIGINT"));
-    } catch (error) {
-        logger.error("Failed to start server:", error);
-        process.exit(1);
-    }
+      server.close(async () => {
+        try {
+          await prisma.$disconnect();
+          logger.info("Database disconnected");
+          process.exit(0);
+        } catch (error) {
+          logger.error("Shutdown error", error);
+          process.exit(1);
+        }
+      });
+    };
+
+
+    process.on("SIGINT", () => shutdown("SIGINT"));
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+
+    process.on("uncaughtException", (error) => {
+      logger.error("Uncaught Exception", error);
+    });
+
+
+    process.on("unhandledRejection", (reason) => {
+      logger.error("Unhandled Rejection", reason);
+    });
+
+
+  } catch(error) {
+    logger.error("Failed to start server", error);
+    await prisma.$disconnect();
+    process.exit(1);
+  }
 }
 
-void startServer();
+
+startServer();

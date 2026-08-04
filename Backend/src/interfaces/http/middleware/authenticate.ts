@@ -13,15 +13,12 @@ declare global {
     }
 }
 
-
 export function authenticate(
     req: Request,
     _res: Response,
     next: NextFunction
 ): void {
-
     const authHeader = req.headers.authorization;
-
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
         return next(
@@ -29,15 +26,12 @@ export function authenticate(
         );
     }
 
-
     const token = authHeader.slice(7);
-
 
     try {
 
         const payload =
             jwtService.verifyAccessToken(token);
-
 
         if (!payload.phone) {
             return next(
@@ -47,19 +41,13 @@ export function authenticate(
             );
         }
 
-
         req.user = {
             id: payload.sub,
             phone: payload.phone
         };
 
-
         next();
-
-
     } catch(error) {
-
         next(error);
-
     }
 }

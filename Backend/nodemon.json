@@ -1,6 +1,12 @@
 {
-    "watch": ["src","prisma", "docs"],
-    "ext": "ts,prisma,json,yaml",
-    "ignore": ["dist", "node_modules"],
-    "exec": "ts-node src/server.ts"
+  "watch": [
+    "src"
+  ],
+  "ext": "ts",
+  "ignore": [
+    "node_modules",
+    "dist"
+  ],
+  "exec": "ts-node src/server.ts",
+  "delay": "1000"
 }
