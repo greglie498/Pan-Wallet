@@ -30,47 +30,84 @@
 
 ```
 Backend/
-  jest.config.js
+  jest.config.ts
   .env.test.example
   tests/
-    jest.setup.ts              # loads .env.test before every test file
+    jest.setup.ts              # loads .env.test, mocks Firebase — see Troubleshooting
     helpers/
       db.ts                    # resetDatabase() — wipes test DB between tests
       app.ts                   # buildTestApp() — the real Express app, no port bound
     unit/
-      password.service.test.ts       ✅ runs here, 4 tests pass
-      jwt.service.test.ts            ✅ runs here, 7 tests pass
-      validate.middleware.test.ts    ✅ runs here, 6 tests pass
-      error-handler.test.ts          ✅ runs here, 4 tests pass
-      wallet.service.test.ts         ⚠️  needs `prisma generate` — see below
-      transaction.service.test.ts    ⚠️  needs `prisma generate` — see below
+      password.service.test.ts       ✅ 4 tests
+      jwt.service.test.ts            ✅ 7 tests
+      validate.middleware.test.ts    ✅ 6 tests
+      error-handler.test.ts          ✅ 4 tests
+      wallet.service.test.ts         ✅ 10 tests
+      transaction.service.test.ts    ✅ 9 tests
     integration/
-      auth.integration.test.ts       ⚠️  needs a real test database — see below
+      auth.integration.test.ts       needs a real test database — see Setup
 ```
 
-## Why some of these say "needs prisma generate"
+## Troubleshooting — two real failures and their fixes
 
-I wrote and reviewed all seven files to the same standard, but I built this
-inside a sandboxed environment with no access to `binaries.prisma.sh`, so I
-could only actually **execute** the four files that don't import
-`@prisma/client` at all (password/JWT services and the two middleware files
-are pure logic with no ORM dependency). The other three import Prisma types
-(`Wallet`, `Prisma.Decimal`, etc.) and Prisma needs its generated client
-present to resolve those — which requires running `prisma generate` against
-a network you already have working, since you run the app locally every day.
+Both of these were hit running `npm test` for the first time and are now fixed
+in `tests/jest.setup.ts`. Documented here so the fix (and the reasoning behind
+it) isn't a mystery later.
 
-**Before your first `npm test`, run:**
+### 1. "Cannot find name" / every env var "expected string, received undefined"
+
+If `jwt.service.test.ts` (or anything else that imports `config/env.ts`) fails
+with a wall of `console.error` lines like `DATABASE_URL: Invalid input:
+expected string, received undefined`, then `Backend/.env.test` does not exist
+yet. `dotenv.config()` fails silently when the file is missing — it does not
+throw — so `process.env` stays empty, `config/env.ts`'s Zod validation fails,
+and it calls `process.exit(1)`, which kills the *entire* Jest process (not
+just that one file), so everything after that point in the run never
+executes.
+
+**Fix:** run the one-time setup step in this file: `cp .env.test.example
+.env.test`.
+
+### 2. `SyntaxError: Unexpected token 'export'` in `tests/integration/auth.integration.test.ts`
+
+This one isn't a setup step you're missing — it's a real incompatibility.
+`src/config/firebase.ts` initialises `firebase-admin` at import time, which
+pulls in `firebase-admin/auth` → `jwks-rsa` → `jose`. The installed version of
+`jose` ships as pure ESM with no CommonJS build, and Jest's default config
+does not transform anything under `node_modules`. Any test that transitively
+imports `auth.service.ts` — which imports `config/firebase.ts`
+unconditionally, even though Firebase-token login is the *optional* auth path
+and not the password-based one actually being tested (Section 6.2.ii) — hits
+this at module-load time, before a single test even runs.
+
+**Fix (already applied in `tests/jest.setup.ts`):** `config/firebase.ts` is
+mocked globally for the whole test run, so `firebase-admin` — and therefore
+`jose` — is never actually required:
+
+```ts
+jest.mock("../src/config/firebase", () => ({
+  firebaseAuth: {
+    verifyIdToken: jest.fn().mockRejectedValue(
+      new Error("firebaseAuth is mocked in tests — see tests/jest.setup.ts")
+    ),
+  },
+}));
 ```
-npx prisma generate
-```
-This is the same command your app already implicitly relies on — nothing new,
-just something my sandbox couldn't reach. Once that's done, all seven files
-should run. If any of `wallet.service.test.ts` or `transaction.service.test.ts`
-fail on first run, it's most likely a small mismatch between the mock setup
-and the exact current shape of `WalletRepository`/`TransactionRepository` —
-check the error message against the actual method signatures in
-`src/infrastructure/repositories/`, since those may have shifted slightly
-since these tests were written.
+
+This is safe because none of the current tests exercise Firebase-token login
+— if a test for that path is added later, it should supply its own
+`mockResolvedValue` for `verifyIdToken` in that specific test file (Jest lets
+individual test files override a global mock's implementation), rather than
+this fix needing to change.
+
+## Why the two Prisma-dependent unit test files previously said "needs prisma generate"
+
+Earlier versions of this README noted that `wallet.service.test.ts` and
+`transaction.service.test.ts` couldn't be verified because the sandbox they
+were written in had no access to `binaries.prisma.sh` to generate the Prisma
+client. Since you already run `prisma generate` locally for the app itself,
+this resolved itself once these tests ran on your machine — they're now
+confirmed passing (10 and 9 tests respectively, per your terminal output).
 
 ## A real bug these tests found
 

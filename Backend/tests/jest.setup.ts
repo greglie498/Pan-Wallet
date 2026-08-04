@@ -13,3 +13,24 @@ dotenv.config({ path: path.resolve(__dirname, "../.env.test") });
 process.env.LOG_LEVEL = process.env.LOG_LEVEL ?? "error";
 
 jest.setTimeout(15000);
+
+// src/config/firebase.ts eagerly initialises firebase-admin at import time,
+// which pulls in firebase-admin/auth -> jwks-rsa -> jose. `jose` ships as
+// pure ESM (`export { ... }` with no CommonJS build for this version), and
+// Jest's default config does not transform node_modules — so ANY test that
+// transitively imports auth.service.ts (which imports config/firebase.ts
+// unconditionally, even though Firebase login is optional and not the
+// primary auth path — Section 6.2.ii) fails with:
+//   SyntaxError: Unexpected token 'export'
+//
+// Rather than teaching Jest to transform an ESM dependency it will never
+// actually need for these tests (none of them exercise the Firebase-token
+// login path), config/firebase.ts is mocked globally here. Real Firebase
+// credentials are never required to run this suite.
+jest.mock("../src/config/firebase", () => ({
+  firebaseAuth: {
+    verifyIdToken: jest.fn().mockRejectedValue(
+      new Error("firebaseAuth is mocked in tests — see tests/jest.setup.ts")
+    ),
+  },
+}));
