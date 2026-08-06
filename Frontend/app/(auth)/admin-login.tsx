@@ -16,15 +16,22 @@ export default function AdminScreen(){
   const login = useAdminStore( state=>state.login );
   const [username,setUsername]=useState("");
   const [password,setPassword]=useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const submit=async()=>{
-    await login(
-      username,
-      password
-    );
-
-    router.replace( "/(app)/admin");
+    setError("");
+    setLoading(true);
+    try {
+      await login(username, password);
+      router.replace("/(app)/admin");
+    } catch (e) {
+      setError("Invalid username or password.");
+    } finally {
+      setLoading(false);
+    }
   };
-
 
   return (
 
@@ -56,13 +63,18 @@ export default function AdminScreen(){
         </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      
+      {error ? (
+        <Text className="text-red-500 text-center mb-4">{error}</Text>
+      ) : null}
 
       <TouchableOpacity
         onPress={submit}
+        disabled={loading}
         className="bg-primary p-4 rounded-xl"
       >
         <Text className="text-white text-center font-bold">
-          Login
+          {loading ? "Signing in..." : "Login"}
         </Text>
       </TouchableOpacity>
     </View>

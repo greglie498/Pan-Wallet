@@ -24,6 +24,11 @@ class AuthController {
         return sendSuccess(res, 200, tokens, "Token refreshed successfully");
     });
 
+    me = asyncHandler(async (req: Request, res: Response) => {
+        const user = await authService.getProfile(req.user!.id);
+        return sendSuccess(res, 200, user, "Profile fetched successfully.");
+    });
+
     logout = asyncHandler(async (req: Request, res: Response) => {
         await authService.logout({
             refreshToken: req.body.refreshToken,

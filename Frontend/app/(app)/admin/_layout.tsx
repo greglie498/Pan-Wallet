@@ -12,7 +12,7 @@ export default function AdminLayout(){
     if(!admin){
         return (
             <Redirect
-                href="/admin"
+                href="/admin-login"
             />
         );
     }

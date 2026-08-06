@@ -1,4 +1,12 @@
+import dotenv from "dotenv";
 import { z } from "zod";
+
+dotenv.config({
+    path: process.env.NODE_ENV === "test"
+        ? ".env.test"
+        : ".env",
+    quiet: true,
+});
 
 export const envSchema = z.object({
     // Server
@@ -78,7 +86,7 @@ if (!parsed.success) {
     parsed.error.issues.forEach((issue) => {
         console.error(`- ${issue.path.join(".")}: ${issue.message}`);
     });
-    process.exit(1);
+    throw new Error("Invalid environment variables");;
 }
 
 export const env = parsed.data;

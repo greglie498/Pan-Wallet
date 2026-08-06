@@ -1,4 +1,4 @@
-import { adminClient } from "./admin.client";
+import { adminClient } from "./client";
 
 export interface AdminStats {
     totalUsers: number;

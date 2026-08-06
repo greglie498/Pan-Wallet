@@ -11,11 +11,7 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ style, size = 40, iconSize }: ThemeToggleProps) {
   const { isDark, toggleTheme, toggle } = useTheme();
-
-  // Safely support either `toggleTheme` or `toggle` method name from your store
   const handleToggle = toggleTheme || toggle;
-  
-  // Calculate proportional icon size if not explicitly provided
   const calculatedIconSize = iconSize ?? Math.round(size * 0.45);
 
   return (

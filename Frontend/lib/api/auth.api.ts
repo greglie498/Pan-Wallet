@@ -59,10 +59,15 @@ export const authApi = {
     return response.data.data;
   },
 
-    adminLogin: async (payload: AdminLoginPayload): Promise<AdminAuthResponse> => {
-      const response = await adminClient.post("/admin/login", payload);
-      return response.data.data;
-    },
+  adminLogin: async (payload: AdminLoginPayload): Promise<AdminAuthResponse> => {
+    const response = await adminClient.post("/admin/login", payload);
+    return response.data.data;
+  },
+
+  getProfile: async (): Promise<AuthResponse["user"]> => {
+    const response = await apiClient.get("/auth/me");
+    return response.data.data;
+  },
 
   firebaseLogin: async (payload: FirebaseAuthPayload): Promise<AuthResponse> => {
     const response = await apiClient.post("/auth/firebase", payload);

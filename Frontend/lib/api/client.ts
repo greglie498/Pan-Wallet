@@ -234,9 +234,6 @@ adminClient.interceptors.response.use(
           "No admin refresh token available"
         );
       }
-
-    // IMPORTANT:
-    // Change this if your backend route differs
       const response = await axios.post( `${BASE_URL}/admin/refresh`,{ refreshToken });
       const { accessToken, refreshToken:newRefreshToken } = response.data.data;
 

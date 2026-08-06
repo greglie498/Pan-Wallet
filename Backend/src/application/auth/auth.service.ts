@@ -234,6 +234,16 @@ class AuthService {
         return tokens;
     }
 
+    async getProfile(userId: string) {
+        const user = await userRepository.findById(userId);
+        if (!user) {
+            throw new UnauthorizedError("User not found.");
+        }
+        // Strip password before returning — same rule as the admin users list
+        const { password, ...safeUser } = user;
+        return safeUser;
+    }
+
     async logout(input: LogoutInput): Promise<void> {
         try{
             const payload = jwtService.verifyRefreshToken(input.refreshToken);

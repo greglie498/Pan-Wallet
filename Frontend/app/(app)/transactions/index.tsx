@@ -24,7 +24,6 @@ function TransactionCard({
   onPress: () => void;
 }) {
   const { isDark } = useTheme();
-
   const isDeposit = transaction.type === "DEPOSIT";
   const statusVariant =
     transaction.status === "COMPLETED"
@@ -32,7 +31,6 @@ function TransactionCard({
       : transaction.status === "PENDING"
       ? "warning"
       : "error";
-
   const formattedDate = new Date(transaction.createdAt).toLocaleDateString(
     "en-US",
     {

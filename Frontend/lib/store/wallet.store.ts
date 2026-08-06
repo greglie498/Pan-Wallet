@@ -6,15 +6,21 @@ interface WalletState {
   isLoading: boolean;
   error: string | null;
   fetchWallets: () => Promise<void>;
+  forceRefresh: () => Promise<void>;
   topUpWallet: (walletId: string, amount: number) => Promise<void>;
   linkWallet: (payload: LinkWalletPayload) => Promise<void>;
   unlinkWallet: (walletId: string) => Promise<void>;
+  reset: () => void; // Added reset interface
 }
 
-export const useWalletStore = create<WalletState>((set, get) => ({
+const initialState = {
   wallets: [],
   isLoading: false,
   error: null,
+};
+
+export const useWalletStore = create<WalletState>((set, get) => ({
+  ...initialState,
 
   fetchWallets: async () => {
     set({ isLoading: true, error: null });
@@ -27,6 +33,10 @@ export const useWalletStore = create<WalletState>((set, get) => ({
         isLoading: false,
       });
     }
+  },
+
+  forceRefresh: async () => {
+    await get().fetchWallets();
   },
 
   topUpWallet: async (walletId: string, amount: number) => {
@@ -43,4 +53,6 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     await walletApi.unlink(walletId);
     await get().fetchWallets();
   },
+  
+  reset: () => set({ wallets: [], isLoading: false, error: null }),
 }));

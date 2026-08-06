@@ -80,7 +80,7 @@ export default function QuoteScreen() {
       setError("No active wallet found. Please link or create a wallet first.");
       return;
     }
-
+420987
     if (!recipientNumber.trim() || isNaN(numericAmount) || numericAmount <= 0) {
       setError("Please enter a valid recipient number and amount.");
       return;

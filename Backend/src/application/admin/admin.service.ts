@@ -78,13 +78,13 @@ class AdminService {
 
         const newAccessToken = jwtService.signAccessToken({
             sub: admin.id,
-            phone: admin.email,
+            email: admin.email,
             role: "ADMIN",
         });
 
         const newRefreshToken = jwtService.signRefreshToken({
             sub: admin.id,
-            phone: admin.email,
+            email:admin.email,
             family: crypto.randomUUID(),
             role: "ADMIN",
         });

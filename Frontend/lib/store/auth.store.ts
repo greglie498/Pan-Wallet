@@ -1,14 +1,13 @@
 import { create } from "zustand";
 import { authApi } from "../api/auth.api";
-import {  setAuthFailureHandler } from "../api/client";
-import { useWalletStore } from "./wallet.store";
+import { setAuthFailureHandler } from "../api/client";
 import { tokenStorage, adminTokenStorage } from "@/lib/storage/token.storage";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 
 const ADMIN_KEY = "panwallet_is_admin";
 const ADMIN_DATA_KEY = "panwallet_admin_data";
-const USER_DATA_KEY="panwallet_user_data";
+const USER_DATA_KEY = "panwallet_user_data";
 
 interface User {
   id: string;
@@ -32,7 +31,7 @@ interface AuthState {
   isLoading: boolean;
   isInitializing: boolean;
   error: string | null;
-
+  fetchProfile: () => Promise<void>;
   initialize: () => Promise<void>;
   loginWithPassword: (phoneNumber: string, password: string) => Promise<void>;
   registerWithPassword: (
@@ -55,58 +54,56 @@ const useAuthStore = create<AuthState>((set) => ({
   error: null,
 
   // ── Initialize ─────────────────────────────────────────────────
-  initialize: async()=>{
-  try{
-    const userToken = await tokenStorage.getAccessToken();
-    const adminToken = await adminTokenStorage.getAccessToken();
+  initialize: async () => {
+    try {
+      const userToken = await tokenStorage.getAccessToken();
+      const adminToken = await adminTokenStorage.getAccessToken();
 
-    const accessToken = userToken || adminToken;
+      const userDataStr = await SecureStore.getItemAsync(USER_DATA_KEY);
 
-    const userDataStr = await SecureStore.getItemAsync(USER_DATA_KEY);
+      if (adminToken) {
+        const adminDataStr = await SecureStore.getItemAsync(ADMIN_DATA_KEY);
+        set({
+          isAuthenticated: true,
+          isAdmin: true,
+          adminData: adminDataStr ? (JSON.parse(adminDataStr) as AdminData) : null,
+          user: null,
+        });
+        return;
+      }
 
-    if(adminToken){
-      const adminDataStr = await SecureStore.getItemAsync(ADMIN_DATA_KEY);
+      if (!userToken) {
+        set({
+          isAuthenticated: false,
+          user: userDataStr ? (JSON.parse(userDataStr) as User) : null,
+          adminData: null,
+          isAdmin: false,
+        });
+        return;
+      }
+
       set({
-        isAuthenticated:true,
-        isAdmin:true,
-        adminData: adminDataStr ? (JSON.parse(adminDataStr) as AdminData) : null,
-        user:null,
+        isAuthenticated: true,
+        isAdmin: false,
+        user: null,
+        adminData: null,
       });
-      return;
-    }
-
-    if(!userToken){
+    } catch (error) {
+      console.log(error);
+      await tokenStorage.clearTokens();
+      await adminTokenStorage.clearTokens();
       set({
-        isAuthenticated:false,
-        user: userDataStr ? (JSON.parse(userDataStr) as User) : null,
-        adminData:null,
-        isAdmin:false
+        isAuthenticated: false,
+        user: null,
+        adminData: null,
+        isAdmin: false,
       });
-      return;
+    } finally {
+      set({
+        isInitializing: false,
+      });
     }
-    
-    set({
-      isAuthenticated:true,
-      isAdmin:false,
-      user: null,
-      adminData:null
-    });
-  }catch(error){
-    console.log(error);
-    await tokenStorage.clearTokens();
-    await adminTokenStorage.clearTokens();
-    set({
-      isAuthenticated:false,
-      user:null,
-      adminData:null,
-      isAdmin:false
-    });
-  }finally{
-    set({
-      isInitializing:false
-    });
-  }
-},
+  },
 
   // ── Register ───────────────────────────────────────────────────
   registerWithPassword: async (phoneNumber, name, password) => {
@@ -190,6 +187,16 @@ const useAuthStore = create<AuthState>((set) => ({
       set({ error: message, isLoading: false });
     }
   },
+  
+  fetchProfile: async () => {
+    try {
+      const user = await authApi.getProfile();
+      await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(user));
+      set({ user });
+    } catch {
+      // dashboard already swallows this with .catch(() => {}); nothing to do here
+    }
+  },
 
   // ── Logout ─────────────────────────────────────────────────────
   logout: async () => {
@@ -206,7 +213,10 @@ const useAuthStore = create<AuthState>((set) => ({
       await SecureStore.deleteItemAsync(ADMIN_KEY);
       await SecureStore.deleteItemAsync(ADMIN_DATA_KEY);
       await SecureStore.deleteItemAsync(USER_DATA_KEY);
+
+      const { useWalletStore } = await import("./wallet.store");
       useWalletStore.getState().reset();
+
       set({
         user: null,
         adminData: null,
@@ -221,8 +231,10 @@ const useAuthStore = create<AuthState>((set) => ({
   clearError: () => set({ error: null }),
 }));
 
-setAuthFailureHandler(() => {
+setAuthFailureHandler(async () => {
+  const { useWalletStore } = await import("./wallet.store");
   useWalletStore.getState().reset();
+
   useAuthStore.setState({
     user: null,
     adminData: null,
@@ -232,6 +244,6 @@ setAuthFailureHandler(() => {
     error: "Your session expired. Please sign in again.",
   });
   router.replace("/(auth)/welcome");
-})
+});
 
 export { useAuthStore };

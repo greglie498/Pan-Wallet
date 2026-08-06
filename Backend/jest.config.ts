@@ -5,12 +5,10 @@ const config: Config = {
   testEnvironment: "node",
   rootDir: ".",
   
-  // Setup files & roots
   setupFiles: ["<rootDir>/tests/jest.setup.ts"],
   moduleDirectories: ["node_modules", "src"],
   moduleFileExtensions: ["ts", "js", "json"],
 
-  // Test pattern matching (handles both /tests/**/*.test.ts and __tests__ folders)
   testMatch: [
     "<rootDir>/tests/**/*.test.ts",
     "**/__tests__/**/*.test.ts"

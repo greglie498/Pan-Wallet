@@ -106,14 +106,21 @@ class AdminRepository {
         const skip = (page - 1) * limit;
         const [users, total] = await Promise.all([
             prisma.user.findMany({
-                skip,
+                skip, 
                 take: limit,
                 orderBy: { createdAt: "desc" },
-                include: {
-                    _count: {
-                        select: {
-                            wallets: true,
-                            refreshTokens: true,
+                select: {
+                    id: true, 
+                    phoneNumber: true, 
+                    name: true, 
+                    email: true,
+                    status: true, 
+                    createdAt: true,
+                    updatedAt: true,
+                    _count: { 
+                        select: { 
+                            wallets: true, 
+                            refreshTokens: true 
                         },
                     },
                 },

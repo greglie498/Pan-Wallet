@@ -17,7 +17,7 @@ import {
     getQuoteSchema,
     initiateTransferSchema,
 } from "./validators/transaction.validators";
-import { adminLoginSchema, adminRefreshSchema } from "./validators/admin .validators";
+import { adminLoginSchema, adminRefreshSchema } from "./validators/admin.validators";
 import { adminController } from "./controllers/admin.controller";
 import { authenticateAdmin } from "./middleware/authenticate-admin";
 
@@ -90,6 +90,12 @@ router.post(
     "/auth/logout",
     validate(logoutSchema),
     authController.logout
+);
+
+router.get(
+    "/auth/me",
+    authenticate,
+    authController.me
 );
 
 

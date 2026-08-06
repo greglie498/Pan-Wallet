@@ -60,7 +60,6 @@ export default function TransactionDetailScreen() {
       </SafeAreaView>
     );
   }
-
   const isDeposit = selectedTransaction.type === "DEPOSIT";
 
   return (

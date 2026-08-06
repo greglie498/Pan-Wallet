@@ -23,6 +23,7 @@ import GreetingHeader from "@/components/dashboard/GreetingHeader";
 import WalletCarousel from "@/components/dashboard/WalletCarousel";
 import StatCard from "@/components/dashboard/StatCard";
 import FloatingSendButton from "@/components/dashboard/FloatingSendButton";
+import { ThemeToggle } from "@/components/ui";
 import { Feather } from "@expo/vector-icons";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");

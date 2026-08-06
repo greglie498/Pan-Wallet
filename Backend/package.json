@@ -13,7 +13,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "seed": "ts-node prisma/seed.ts",
-    "test": "jest --runInBand",
+    "test": "cross-env NODE_ENV=test jest --runInBand",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --runInBand",
     "test:unit": "jest tests/unit --runInBand"
@@ -50,6 +50,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/uuid": "^10.0.0",
     "@types/yamljs": "^0.2.34",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
