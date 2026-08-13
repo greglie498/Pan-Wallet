@@ -61,6 +61,7 @@ export default function AppLayout() {
         name="dashboard"
         options={{
           title: "Home",
+          href: isAdmin ? null : undefined,
           tabBarIcon: ({ color }) => <TabIcon name="home" color={color} />,
         }}
       />
@@ -74,6 +75,7 @@ export default function AppLayout() {
         name="wallets"
         options={{
           title: "Wallets",
+          href: isAdmin ? null : undefined,
           tabBarIcon: ({ color }) => (
             <TabIcon name="credit-card" color={color} />
           ),
@@ -83,6 +85,7 @@ export default function AppLayout() {
         name="transactions"
         options={{
           title: "History",
+          href: isAdmin ? null : undefined,
           tabBarIcon: ({ color }) => <TabIcon name="clock" color={color} />,
         }}
         listeners={({ navigation }) => ({

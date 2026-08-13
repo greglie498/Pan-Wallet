@@ -14,14 +14,13 @@ import {
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthStore } from "@/lib/store";
 import { useTheme } from "@/lib/store/theme.store";
-import { useAdminStore } from "@/lib/store/admin.store";
+
 
 // Keep splash screen visible while fonts load and auth initializes
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const { initialize, isInitializing } = useAuthStore();
-  const { initialize:initializeAdmin }=useAdminStore();
   const { isDark, initialize: initTheme } = useTheme();
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -32,7 +31,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     initialize();
-    initializeAdmin();
     initTheme();
   }, []);
 

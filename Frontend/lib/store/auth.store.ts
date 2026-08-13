@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { authApi } from "../api/auth.api";
 import { setAuthFailureHandler } from "../api/client";
+import { useWalletStore } from "./wallet.store";
 import { tokenStorage, adminTokenStorage } from "@/lib/storage/token.storage";
 import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -135,15 +136,19 @@ const useAuthStore = create<AuthState>((set) => ({
   loginWithPassword: async (phoneNumber, password) => {
     set({ isLoading: true, error: null });
     try {
+      await adminTokenStorage.clearTokens();
+      await SecureStore.deleteItemAsync(ADMIN_DATA_KEY);
+
       const result = await authApi.login({ phoneNumber, password });
       await tokenStorage.setTokens(
         result.tokens.accessToken,
         result.tokens.refreshToken
       );
-      await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify(result.user));
+      await SecureStore.setItemAsync(USER_DATA_KEY, JSON.stringify( result.user ));
       await SecureStore.setItemAsync(ADMIN_KEY, "false");
       set({
         user: result.user,
+        adminData: null,
         isAuthenticated: true,
         isAdmin: false,
         isLoading: false,
@@ -162,6 +167,12 @@ const useAuthStore = create<AuthState>((set) => ({
   adminLogin: async (username, password) => {
     set({ isLoading: true, error: null });
     try {
+      // Clear any leftover user session first — same reasoning as above,
+      // in reverse.
+      await tokenStorage.clearTokens();
+      await SecureStore.deleteItemAsync(USER_DATA_KEY);
+      useWalletStore.getState().reset();
+
       const result = await authApi.adminLogin({ username, password });
       await adminTokenStorage.setTokens(
         result.tokens.accessToken,
@@ -173,12 +184,13 @@ const useAuthStore = create<AuthState>((set) => ({
         JSON.stringify(result.admin)
       );
       set({
+        user: null,
         adminData: result.admin,
         isAuthenticated: true,
         isAdmin: true,
         isLoading: false,
       });
-      router.replace("/(app)/dashboard");
+      router.replace("/(app)/admin");
     } catch (error: unknown) {
       const message =
         error instanceof Error
@@ -210,6 +222,7 @@ const useAuthStore = create<AuthState>((set) => ({
       // Continue with local logout
     } finally {
       await tokenStorage.clearTokens();
+      await adminTokenStorage.clearTokens();
       await SecureStore.deleteItemAsync(ADMIN_KEY);
       await SecureStore.deleteItemAsync(ADMIN_DATA_KEY);
       await SecureStore.deleteItemAsync(USER_DATA_KEY);

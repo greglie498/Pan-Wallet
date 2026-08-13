@@ -37,8 +37,8 @@ export default function TopUpScreen() {
       setError("Enter a valid amount.");
       return false;
     }
-    if (parsed > 10000) {
-      setError("Maximum top-up is $10,000.");
+    if (parsed > 100000) {
+      setError(`Maximum top-up is ${wallet?.currency}100,000.`);
       return false;
     }
     setError("");
@@ -52,6 +52,7 @@ export default function TopUpScreen() {
     try {
       await apiClient.post(`/wallets/${walletId}/topup`, {
         amount: parseFloat(amount),
+        currency: wallet?.currency,
       });
 
       // Refresh wallet data

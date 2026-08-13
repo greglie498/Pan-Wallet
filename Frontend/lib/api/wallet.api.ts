@@ -37,9 +37,10 @@ export const walletApi = {
     await apiClient.delete(`/wallets/${walletId}/unlink`);
   },
 
-  topUp: async (walletId: string, amount: number): Promise<Wallet> => {
+  topUp: async (walletId: string, amount: number, currency: string): Promise<Wallet> => {
     const response = await apiClient.post(`/wallets/${walletId}/topup`, {
       amount,
+      currency
     });
     return response.data.data;
   },

@@ -63,10 +63,15 @@ export default function QuoteScreen() {
 
   useEffect(() => {
     fetchWallets();
-  }, []);
+    if (wallets.length > 0 && !selectedWalletId) {
+      setSelectedWalletId(wallets[0].id)
+    }
+  }, [wallets]);
 
   // Primary linked wallet to execute transfer from
-  const activeWallet = wallets[0];
+  const [selectedWalletId, setSelectedWalletId] = useState<string>("");
+  const activeWallet = 
+    wallets.find ( (wallet) => wallet.id === selectedWalletId) || wallets[0];
   const availableBalance = wallets.reduce(
     (acc, wallet) => acc + parseFloat(wallet.balance || "0"),
     0
@@ -80,7 +85,7 @@ export default function QuoteScreen() {
       setError("No active wallet found. Please link or create a wallet first.");
       return;
     }
-420987
+
     if (!recipientNumber.trim() || isNaN(numericAmount) || numericAmount <= 0) {
       setError("Please enter a valid recipient number and amount.");
       return;
@@ -216,6 +221,50 @@ export default function QuoteScreen() {
 
             {step === "INPUT" ? (
               <>
+                {/* Wallet Selection */}
+                <Text
+                  style={{color: isDark ? "#94A3B8" : "#64748B"}}
+                  className="text-xs font-semibold mb-3 uppercase"
+                >
+                  Pay From
+                </Text>
+
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row mb-6">
+                  { wallets.map((wallet) => {
+                    const isSelected = activeWallet?.id === wallet.id;
+                    return (
+                      <TouchableOpacity
+                        key={wallet.id}
+                        onPress={() => setSelectedWalletId(wallet.id)}
+                        style={{
+                          backgroundColor: isDark ? "#0F172A" : "#FFFFFF",
+                          borderColor: isSelected
+                            ? "#F5A623"
+                            : isDark
+                            ? "#1E293B"
+                            : "#E2E8F0",
+                        }}
+                        className="flex-1 flex-row items-center p-3 rounded-xl border-2"
+                        activeOpacity={0.8}
+                      >
+                        <View>
+                          <Text
+                            style={{ color: isDark ? "#FFFFFF" : "#0F172A" }}
+                            className="font-bold text-xs flex-1"
+                          >
+                            {wallet.provider} 
+                          </Text>
+                          <Text
+                            style={{ color: isDark ? "#94A3B8" : "#64748B" }}
+                            className="text-xs"
+                          >
+                            Bal: {wallet.currency} {wallet.balance}
+                          </Text>                          
+                        </View>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </ScrollView>
                 {/* Provider Selection */}
                 <Text
                   style={{ color: isDark ? "#94A3B8" : "#64748B" }}

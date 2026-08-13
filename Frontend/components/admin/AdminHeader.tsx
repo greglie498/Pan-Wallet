@@ -1,4 +1,5 @@
 import {View,Text,TouchableOpacity} from "react-native";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface Props{
     logout:()=>void;
@@ -26,14 +27,18 @@ export default function AdminHeader({logout}:Props){
                     </View>
                 </View>
 
-                <TouchableOpacity
-                    onPress={logout}
-                    className="w-11 h-11 rounded-full bg-white/10 items-center justify-center"
-                >
-                    <Text className="text-white text-xl">
-                        ↩
-                    </Text>
-                </TouchableOpacity>
+                <View className="flex-row items-center">
+                    <ThemeToggle size={38} />
+
+                    <TouchableOpacity
+                        onPress={logout}
+                        className="ml-3 w-11 h-11 rounded-full bg-white/10 items-center justify-center"
+                    >
+                        <Text className="text-white text-xl">
+                            ↩
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </View>
     )

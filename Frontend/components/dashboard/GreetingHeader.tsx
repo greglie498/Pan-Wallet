@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { ThemeToggle } from "@/components/ui";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface GreetingHeaderProps {
   greeting: string;

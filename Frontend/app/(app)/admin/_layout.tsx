@@ -1,15 +1,15 @@
 import {Stack, Redirect} from "expo-router";
-import {useAdminStore} from "@/lib/store/admin.store";
+import {useAuthStore} from "@/lib/store";
 
 
 export default function AdminLayout(){
 
-    const admin =
-        useAdminStore(
-            state=>state.admin
+    const isAdmin =
+        useAuthStore(
+            state=>state.isAdmin
         );
 
-    if(!admin){
+    if(!isAdmin){
         return (
             <Redirect
                 href="/admin-login"

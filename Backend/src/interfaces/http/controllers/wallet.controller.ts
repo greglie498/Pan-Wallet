@@ -36,7 +36,8 @@ class WalletController {
         const wallet = await walletService.topUp(
             req.params.walletId as string,
             req.user.id,
-            req.body.amount
+            req.body.amount,
+            req.body.currency
         );
         return sendSuccess (res, 200, wallet, "Wallet topped up successfully.")
     });

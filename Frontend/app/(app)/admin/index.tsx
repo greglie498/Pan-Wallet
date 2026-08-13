@@ -19,7 +19,7 @@ adminApi,
 AdminStats
 } from "@/lib/api/admin.api";
 import AdminHeader from "@/components/admin/AdminHeader";
-import { useAdminStore } from "@/lib/store/admin.store";
+import { useAuthStore } from "@/lib/store";
 import AdminStatCard from "@/components/admin/AdminStatCard";
 import QuickAccessCard from "@/components/admin/QuickAccessCard";
 import TransactionStatusCard from "@/components/admin/TransactionStatusCard";
@@ -29,7 +29,7 @@ import ProviderCard from "@/components/admin/ProviderCard";
 const screenWidth = Dimensions.get("window").width;
 
 export default function AdminDashboardScreen(){
-    const { logout }= useAdminStore();
+    const { logout }= useAuthStore();
     const [stats,setStats]=useState<AdminStats|null>(null);
     const [loading,setLoading]=useState(true);
     const [error,setError]=useState("");
