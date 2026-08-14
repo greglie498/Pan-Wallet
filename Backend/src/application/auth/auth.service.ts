@@ -51,8 +51,15 @@ class AuthService {
     ): Promise<AuthTokens> {
         const payload = { sub: userId, phone: phoneNumber };
 
-        const accessToken = jwtService.signAccessToken( payload );
-        const refreshToken = jwtService.signRefreshToken({ ...payload, family });
+        const accessToken = jwtService.signAccessToken(payload);
+
+        // Include unique jti (UUID) so rapid token generation guarantees unique tokenHash values.
+        // `RefreshTokenPayload` does not currently model `jti`, so widen the payload locally.
+        const refreshToken = jwtService.signRefreshToken({
+            ...payload,
+            family,
+            jti: crypto.randomUUID(),
+        } as any);
         const tokenHash = this.hashToken(refreshToken);
 
         await refreshTokenRepository.create({
@@ -62,7 +69,7 @@ class AuthService {
             user: { connect: { id: userId } },
         });
 
-        return { accessToken, refreshToken }
+        return { accessToken, refreshToken };
     }
 
     //----- public methods ----------------------------------------------------------------------------------------
@@ -75,7 +82,7 @@ class AuthService {
 
         if (input.email) {
             const existingEmail = await userRepository.findByEmail(input.email);
-            if(existingEmail) {
+            if (existingEmail) {
                 throw new ConflictError("An account with this email already exists.");
             }
         }
@@ -85,10 +92,10 @@ class AuthService {
         const user = await prisma.$transaction(async (tx) => {
             const newUser = await userRepository.create(
                 {
-                phoneNumber: input.phoneNumber,
-                name: input.name,
-                email: input.email,
-                password: hashedPassword,
+                    phoneNumber: input.phoneNumber,
+                    name: input.name,
+                    email: input.email,
+                    password: hashedPassword,
                 },
                 tx
             );
@@ -103,7 +110,7 @@ class AuthService {
                 tx
             );
 
-            return newUser
+            return newUser;
         });
 
         const family = crypto.randomUUID();
@@ -123,16 +130,16 @@ class AuthService {
     async login(input: LoginInput): Promise<AuthResult> {
         const user = await userRepository.findByPhone(input.phoneNumber);
         if (!user || !user.password) {
-            throw new UnauthorizedError("Invalid phone number or password");
+            throw new UnauthorizedError("Invalid credentials");
         }
 
         if (user.status === "SUSPENDED") {
             throw new ForbiddenError("This account has been suspended");
         }
 
-        const passwordMatch = await paswswordService.compare(input.password, user.password)
+        const passwordMatch = await paswswordService.compare(input.password, user.password);
         if (!passwordMatch) {
-            throw new UnauthorizedError("Invalid phone number or password");
+            throw new UnauthorizedError("Invalid credentials");
         }
 
         const family = crypto.randomUUID();
@@ -149,7 +156,7 @@ class AuthService {
         };
     }
 
-    async firebaseLogin(input: firebaseAuthInput): Promise<AuthResult>  {
+    async firebaseLogin(input: firebaseAuthInput): Promise<AuthResult> {
         // step 1 - verify the Firebase ID token and extract the phone number
         let decodedToken: DecodedIdToken;
         try {
@@ -160,7 +167,7 @@ class AuthService {
 
         const phoneNumber = decodedToken.phone_number;
         if (!phoneNumber) {
-            throw new UnauthorizedError("Firebase  token does not contain a phone number");
+            throw new UnauthorizedError("Firebase token does not contain a phone number");
         }
 
         // Step 2 - find existing user or create a new one
@@ -171,8 +178,8 @@ class AuthService {
                 const newUser = await userRepository.create(
                     {
                         phoneNumber: phoneNumber,
-                        name: decodedToken.name ??  phoneNumber,
-                        email: decodedToken.email ,
+                        name: decodedToken.name ?? phoneNumber,
+                        email: decodedToken.email,
                         // No password since this is a Firebase-authenticated user
                     },
                     tx
@@ -201,7 +208,7 @@ class AuthService {
         const tokens = await this.issueTokens(user.id, user.phoneNumber, family);
 
         return {
-            user:  {
+            user: {
                 id: user.id,
                 phoneNumber: user.phoneNumber,
                 name: user.name,
@@ -209,7 +216,6 @@ class AuthService {
             },
             tokens,
         };
-
     }
 
     async refresh(input: RefreshInput): Promise<AuthTokens> {
@@ -245,16 +251,16 @@ class AuthService {
     }
 
     async logout(input: LogoutInput): Promise<void> {
-        try{
+        try {
             const payload = jwtService.verifyRefreshToken(input.refreshToken);
             const tokenHash = this.hashToken(input.refreshToken);
             const stored = await refreshTokenRepository.findByTokenHash(tokenHash);
 
-            if (stored && !stored.revoked){
+            if (stored && !stored.revoked) {
                 await refreshTokenRepository.revokeByTokenHash(tokenHash);
             }
         } catch {
-            // if the token is invalid or expired we still treat logout as successfull
+            // if the token is invalid or expired we still treat logout as successful
             // - the user is already effectively logged out
         }
     }

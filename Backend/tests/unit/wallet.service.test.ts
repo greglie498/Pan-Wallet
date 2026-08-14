@@ -91,32 +91,72 @@ describe("WalletService.topUp", () => {
   it("rejects a top-up on a wallet that does not belong to the caller", async () => {
     mockedRepo.findById.mockResolvedValue(makeWallet({ userId: "someone-else" }));
 
-    await expect(walletService.topUp("wallet-1", "user-1", 50)).rejects.toThrow(
-      NotFoundError
-    );
+    await expect(
+      walletService.topUp("wallet-1", "user-1", 50, "")
+    ).rejects.toThrow(NotFoundError);
   });
 
   it("rejects a top-up on a suspended wallet", async () => {
     mockedRepo.findById.mockResolvedValue(makeWallet({ status: "SUSPENDED" }));
 
-    await expect(walletService.topUp("wallet-1", "user-1", 50)).rejects.toThrow(
-      BadRequestError
-    );
+    await expect(
+      walletService.topUp("wallet-1", "user-1", 50, "")
+    ).rejects.toThrow(BadRequestError);
   });
 
   it("rejects a top-up amount over the $10,000 cap", async () => {
     mockedRepo.findById.mockResolvedValue(makeWallet());
 
-    await expect(walletService.topUp("wallet-1", "user-1", 10001)).rejects.toThrow(
-      BadRequestError
-    );
+    await expect(
+      walletService.topUp("wallet-1", "user-1", 10001, "")
+    ).rejects.toThrow(BadRequestError);
   });
 
   it("rejects a zero or negative top-up amount", async () => {
     mockedRepo.findById.mockResolvedValue(makeWallet());
 
-    await expect(walletService.topUp("wallet-1", "user-1", 0)).rejects.toThrow(
-      BadRequestError
+    await expect(
+      walletService.topUp("wallet-1", "user-1", 0, "")
+    ).rejects.toThrow(BadRequestError);
+  });
+});
+
+describe("WalletService.listWallets", () => {
+  it("returns all wallets belonging to the caller", async () => {
+    mockedRepo.findByUserId.mockResolvedValue([
+      makeWallet({ id: "wallet-1" }),
+      makeWallet({ id: "wallet-2", provider: WalletProvider.MTN_MOMO }),
+    ] as never);
+
+    const result = await walletService.listWallets("user-1");
+
+    expect(result).toHaveLength(2);
+    expect(mockedRepo.findByUserId).toHaveBeenCalledWith("user-1");
+  });
+});
+
+describe("WalletService.getWallet", () => {
+  it("returns the wallet when it belongs to the caller", async () => {
+    mockedRepo.findById.mockResolvedValue(makeWallet({ userId: "user-1" }));
+
+    const result = await walletService.getWallet("wallet-1", "user-1");
+
+    expect(result.id).toBe("wallet-1");
+  });
+
+  it("rejects retrieval of a wallet belonging to a different user (NotFoundError, not ForbiddenError, to avoid confirming the wallet's existence)", async () => {
+    mockedRepo.findById.mockResolvedValue(makeWallet({ userId: "someone-else" }));
+
+    await expect(walletService.getWallet("wallet-1", "user-1")).rejects.toThrow(
+      NotFoundError
+    );
+  });
+
+  it("rejects retrieval of a wallet ID that does not exist", async () => {
+    mockedRepo.findById.mockResolvedValue(null);
+
+    await expect(walletService.getWallet("nonexistent", "user-1")).rejects.toThrow(
+      NotFoundError
     );
   });
 });

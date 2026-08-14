@@ -158,3 +158,185 @@ describe("TransactionService.handleCallback (Section 6.3.vii)", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });
+
+describe("TransactionService.initiateTransfer — happy path (Section 6.3.vii)", () => {
+  const mockedMpesa = jest.requireMock(
+    "../../src/infrastructure/providers/mpesa.provider"
+  ).mpesaProvider;
+
+  beforeEach(() => {
+    mockedRateProvider.convert.mockResolvedValue({ rate: 129.5, convertedAmount: 1295 });
+    mockedWalletRepo.deductIfSufficient.mockResolvedValue(true as never);
+    mockedRateRepo.create.mockResolvedValue({ id: "rate-1" } as never);
+    mockedTxRepo.create.mockResolvedValue({
+      id: "txn-1",
+      senderWalletId: "wallet-1",
+      status: "PENDING",
+    } as never);
+    mockedMpesa.initiateStkPush.mockResolvedValue({
+      CheckoutRequestID: "ws_CO_1",
+    });
+  });
+
+  it("deducts the sender's balance atomically before calling the provider", async () => {
+    mockedWalletRepo.findById.mockResolvedValue(makeWallet({ balance: new Prisma.Decimal(100) }));
+
+    await transactionService.initiateTransfer("user-1", {
+      senderWalletId: "wallet-1",
+      recipientProvider: "MPESA",
+      recipientNumber: "254700000000",
+      amount: 10,
+    } as never);
+
+    expect(mockedWalletRepo.deductIfSufficient).toHaveBeenCalledWith(
+      "wallet-1",
+      expect.objectContaining({}), // Prisma.Decimal(15) — amount + $5 MPESA fee
+      expect.anything()
+    );
+  });
+
+  it("creates a PENDING transaction record before contacting the provider", async () => {
+    mockedWalletRepo.findById.mockResolvedValue(makeWallet({ balance: new Prisma.Decimal(100) }));
+
+    await transactionService.initiateTransfer("user-1", {
+      senderWalletId: "wallet-1",
+      recipientProvider: "MPESA",
+      recipientNumber: "254700000000",
+      amount: 10,
+    } as never);
+
+    expect(mockedTxRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "PENDING", recipientNumber: "254700000000" }),
+      expect.anything()
+    );
+  });
+
+  it("stores the provider's reference ID and returns PENDING status on success", async () => {
+    mockedWalletRepo.findById.mockResolvedValue(makeWallet({ balance: new Prisma.Decimal(100) }));
+
+    const result = await transactionService.initiateTransfer("user-1", {
+      senderWalletId: "wallet-1",
+      recipientProvider: "MPESA",
+      recipientNumber: "254700000000",
+      amount: 10,
+    } as never);
+
+    expect(result.status).toBe("PENDING");
+    expect(result.providerReferenceId).toBe("ws_CO_1");
+    expect(mockedTxRepo.updateProviderReference).toHaveBeenCalledWith("txn-1", "ws_CO_1");
+  });
+
+  it("if deductIfSufficient reports insufficient funds inside the transaction, the transfer is rejected", async () => {
+    mockedWalletRepo.findById.mockResolvedValue(makeWallet({ balance: new Prisma.Decimal(100) }));
+    mockedWalletRepo.deductIfSufficient.mockResolvedValue(false as never);
+
+    await expect(
+      transactionService.initiateTransfer("user-1", {
+        senderWalletId: "wallet-1",
+        recipientProvider: "MPESA",
+        recipientNumber: "254700000000",
+        amount: 10,
+      } as never)
+    ).rejects.toThrow(BadRequestError);
+  });
+});
+
+describe("TransactionService.handleCallback — status transitions (Section 6.3.vii)", () => {
+  it("marks a PENDING transaction COMPLETED on a successful callback, without refunding the wallet", async () => {
+    mockedTxRepo.findByProviderReference.mockResolvedValue({
+      id: "txn-1",
+      status: "PENDING",
+      senderWalletId: "wallet-1",
+      amount: new Prisma.Decimal(10),
+      fee: new Prisma.Decimal(5),
+    } as never);
+    mockedTxRepo.updateStatusIfPending.mockResolvedValue(true as never);
+
+    await transactionService.handleCallback({
+      providerReferenceId: "ws_CO_1",
+      success: true,
+    } as never);
+
+    expect(mockedTxRepo.updateStatusIfPending).toHaveBeenCalledWith(
+      "txn-1", "COMPLETED", undefined, expect.anything()
+    );
+    expect(mockedWalletRepo.topUp).not.toHaveBeenCalled();
+  });
+
+  it("marks a PENDING transaction FAILED on a failed callback and refunds amount + fee to the wallet", async () => {
+    mockedTxRepo.findByProviderReference.mockResolvedValue({
+      id: "txn-1",
+      status: "PENDING",
+      senderWalletId: "wallet-1",
+      amount: new Prisma.Decimal(10),
+      fee: new Prisma.Decimal(5),
+    } as never);
+    mockedTxRepo.updateStatusIfPending.mockResolvedValue(true as never);
+
+    await transactionService.handleCallback({
+      providerReferenceId: "ws_CO_1",
+      success: false,
+      failureReason: "Insufficient funds on recipient network",
+    } as never);
+
+    expect(mockedTxRepo.updateStatusIfPending).toHaveBeenCalledWith(
+      "txn-1", "FAILED", "Insufficient funds on recipient network", expect.anything()
+    );
+    expect(mockedWalletRepo.topUp).toHaveBeenCalledWith(
+      "wallet-1",
+      expect.objectContaining({}),
+      expect.anything()
+    );
+  });
+});
+
+describe("TransactionService.getTransaction (ownership enforcement)", () => {
+  it("returns the transaction when the caller owns the sender wallet", async () => {
+    mockedTxRepo.findById.mockResolvedValue({
+      id: "txn-1",
+      senderWalletId: "wallet-1",
+    } as never);
+    mockedWalletRepo.findById.mockResolvedValue(makeWallet({ userId: "user-1" }));
+
+    const result = await transactionService.getTransaction("txn-1", "user-1");
+    expect(result.id).toBe("txn-1");
+  });
+
+  it("rejects retrieval of a transaction belonging to another user's wallet", async () => {
+    mockedTxRepo.findById.mockResolvedValue({
+      id: "txn-1",
+      senderWalletId: "wallet-1",
+    } as never);
+    mockedWalletRepo.findById.mockResolvedValue(makeWallet({ userId: "someone-else" }));
+
+    await expect(
+      transactionService.getTransaction("txn-1", "user-1")
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("rejects retrieval of a transaction ID that does not exist", async () => {
+    mockedTxRepo.findById.mockResolvedValue(null as never);
+
+    await expect(
+      transactionService.getTransaction("nonexistent", "user-1")
+    ).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe("TransactionService.listTransactions", () => {
+  it("lists all of a user's transactions when no walletId filter is given", async () => {
+    mockedTxRepo.findByUserId.mockResolvedValue([{ id: "txn-1" }, { id: "txn-2" }] as never);
+
+    const result = await transactionService.listTransactions("user-1");
+    expect(result).toHaveLength(2);
+    expect(mockedTxRepo.findByUserId).toHaveBeenCalledWith("user-1");
+  });
+
+  it("rejects a walletId filter for a wallet the caller does not own", async () => {
+    mockedWalletRepo.findById.mockResolvedValue(makeWallet({ userId: "someone-else" }));
+
+    await expect(
+      transactionService.listTransactions("user-1", "wallet-1")
+    ).rejects.toThrow(NotFoundError);
+  });
+});

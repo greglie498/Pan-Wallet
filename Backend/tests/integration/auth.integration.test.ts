@@ -54,7 +54,10 @@ describe("POST /api/v1/auth/register (Section 6.3.v)", () => {
       where: { userId: dbUser?.id },
     });
     expect(wallets).toHaveLength(1);
-    expect(wallets[0].provider).toBe("PANWALLET_INTERNAL");
+
+    const wallet = wallets[0];
+    expect(wallet).toBeDefined();
+    expect(wallet!.provider).toBe("PANWALLET_INTERNAL");
   });
 
   it("rejects a second registration with the same phone number (409 CONFLICT)", async () => {

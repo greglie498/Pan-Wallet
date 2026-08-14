@@ -13,10 +13,12 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "seed": "ts-node -r dotenv/config prisma/seed.ts",
-    "test": "cross-env NODE_ENV=test jest --runInBand",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --runInBand",
-    "test:unit": "jest tests/unit --runInBand"
+    "test": "dotenv -e .env.test -- cross-env NODE_ENV=test jest --runInBand",
+    "test:watch": "dotenv -e .env.test -- jest --watch",
+    "test:coverage": "dotenv -e .env.test -- jest --coverage --runInBand",
+    "test:unit": "dotenv -e .env.test -- jest tests/unit --runInBand",
+    "test:db:push": "dotenv -e .env.test -- npx prisma db push",
+    "test:db:migrate": "dotenv -e .env.test -- npx prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -52,6 +54,7 @@
     "@types/yamljs": "^0.2.34",
     "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
+    "dotenv-cli": "^11.0.0",
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
     "prisma": "^6.19.3",
