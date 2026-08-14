@@ -40,7 +40,7 @@ export const walletApi = {
   topUp: async (walletId: string, amount: number, currency: string): Promise<Wallet> => {
     const response = await apiClient.post(`/wallets/${walletId}/topup`, {
       amount,
-      currency
+      currency,
     });
     return response.data.data;
   },

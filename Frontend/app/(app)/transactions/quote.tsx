@@ -326,7 +326,7 @@ export default function QuoteScreen() {
                 />
 
                 <Input
-                  label="Amount (USD)"
+                  label="Amount"
                   placeholder="0.00"
                   keyboardType="decimal-pad"
                   value={amountUsd}

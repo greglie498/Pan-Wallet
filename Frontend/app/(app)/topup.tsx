@@ -31,6 +31,8 @@ export default function TopUpScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const currency = wallet?.currency ?? "USD";
+
   const validate = (): boolean => {
     const parsed = parseFloat(amount);
     if (!amount || isNaN(parsed) || parsed <= 0) {
@@ -121,7 +123,7 @@ export default function TopUpScreen() {
                     Current Balance
                   </Text>
                   <Text className="text-primary dark:text-white font-bold text-xl">
-                    {wallet?.currency ?? "USD"}{" "}
+                    {currency} {amount}
                     {parseFloat(wallet?.balance ?? "0").toLocaleString(
                       "en-US",
                       { minimumFractionDigits: 2 }
