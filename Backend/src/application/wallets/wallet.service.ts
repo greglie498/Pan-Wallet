@@ -85,14 +85,14 @@ class WalletService {
     if (amount <= 0) {
       throw new BadRequestError("Top-up amount must be greater than zero.");
     }
-    if (amount > 100000) {
+    if (amount > 10000) {
       throw new BadRequestError(
-        `Maximum top-up amount is ${wallet.currency} 100,000 per transaction.`
+        `Maximum top-up amount is ${wallet.currency} 10,000 per transaction.`
       );
     }
     if (wallet.currency !== currency) {
       throw new BadRequestError(
-        `Currency mismatch. Wallet uses {wallet.currency}.`
+        `Currency mismatch. Wallet uses ${wallet.currency}.`
       );
     }
     const decimalAmount = new Prisma.Decimal(amount);

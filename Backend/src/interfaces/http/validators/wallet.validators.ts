@@ -19,6 +19,7 @@ export const topUpSchema = z.object({
         .number()
         .positive("Amount must be greater than zero.")
         .max(10000, "Maximum top-up is $10,000."),
+        currency: z.string().length(3, "Currency must be a 3-letter code.").toUpperCase(),
 });
 
 export type LinkWalletInput = z.infer<typeof linkWalletSchema>

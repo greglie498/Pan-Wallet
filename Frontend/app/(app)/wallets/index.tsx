@@ -15,7 +15,7 @@ import { Button, Input, Card } from "@/components/ui";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { useWalletStore } from "@/lib/store";
 import { useTheme } from "@/lib/store/theme.store";
-import { walletApi } from "@/lib/api/wallet.api";
+import { walletApi, Wallet } from "@/lib/api/wallet.api";
 
 type ProviderType = "MPESA" | "MTN_MOMO";
 
@@ -26,10 +26,11 @@ export default function WalletsScreen() {
   // Modals state
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
-  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
+
 
   // Form Inputs
   const [topUpAmount, setTopUpAmount] = useState("");
+  const [selectedWallet, setSelectedAmount] = useState<Wallet | null> (null);
   const [linkProvider, setLinkProvider] = useState<ProviderType>("MPESA");
   const [linkPhoneNumber, setLinkPhoneNumber] = useState("");
 
@@ -47,7 +48,7 @@ export default function WalletsScreen() {
   );
 
   const handleTopUp = async () => {
-    if (!selectedWalletId) return;
+    if (!selectedWallet) return;
     const amount = parseFloat(topUpAmount);
 
     if (isNaN(amount) || amount <= 0) {
@@ -64,7 +65,7 @@ export default function WalletsScreen() {
     setErrorMessage(null);
 
     try {
-      await walletApi.topUp(selectedWalletId, amount);
+      await walletApi.topUp(selectedWallet?.id, amount, selectedWallet.currency);
       await fetchWallets();
       setShowTopUpModal(false);
       setTopUpAmount("");
@@ -265,7 +266,7 @@ export default function WalletsScreen() {
                   <View className="flex-row items-center mt-2 space-x-2">
                     <TouchableOpacity
                       onPress={() => {
-                        setSelectedWalletId(wallet.id);
+                        setSelectedAmount(wallet);
                         setErrorMessage(null);
                         setShowTopUpModal(true);
                       }}
@@ -318,17 +319,14 @@ export default function WalletsScreen() {
             </View>
 
             <Input
-              label="Amount (USD)"
-              placeholder="0.00"
               keyboardType="decimal-pad"
               value={topUpAmount}
               onChangeText={(text) => {
-                setTopUpAmount(text);
-                if (errorMessage) setErrorMessage(null);
+                setTopUpAmount(text.replace(/[^0-9.]/g, ""));  
+                setErrorMessage(null);
               }}
-              error={errorMessage || undefined}
+              leftIcon={<Text>{selectedWallet?.currency}</Text>}  
             />
-
             <Button
               title="Confirm Top Up"
               variant="primary"
