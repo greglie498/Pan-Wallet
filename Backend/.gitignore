@@ -6,6 +6,8 @@ coverage
 .env
 .env.*
 
+docs/newman
+
 npm-debug.log*
 
 .prisma/client
