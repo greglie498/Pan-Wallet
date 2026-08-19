@@ -86,7 +86,7 @@ const useAuthStore = create<AuthState>((set) => ({
       set({
         isAuthenticated: true,
         isAdmin: false,
-        user: null,
+        user: userDataStr ? (JSON.parse(userDataStr) as User) : null,
         adminData: null,
       });
     } catch (error) {
