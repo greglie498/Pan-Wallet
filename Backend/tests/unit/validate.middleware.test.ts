@@ -90,7 +90,7 @@ describe("linkWalletSchema — wallet number format", () => {
   it("rejects a wallet number that is too long", () => {
     const result = linkWalletSchema.safeParse({
       provider: "MPESA",
-      walletNumber: "+25471234567890",
+      walletNumber: "+254712345678901",
     });
     expect(result.success).toBe(false);
   });
