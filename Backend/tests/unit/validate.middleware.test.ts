@@ -22,8 +22,8 @@ describe("validate() middleware — generic behaviour", () => {
 
     validate(schema)(req, res, next);
 
-    expect(next).toHaveBeenCalledWith(); // called with no error
-    expect(req.body).toEqual({ amount: 42 }); // string coerced to number
+    expect(next).toHaveBeenCalledWith();
+    expect(req.body).toEqual({ amount: 42 });
   });
 
   it("responds with 422 VALIDATION_ERROR and a per-field breakdown on failure, without calling next()", () => {
@@ -46,44 +46,53 @@ describe("validate() middleware — generic behaviour", () => {
   });
 });
 
-describe("linkWalletSchema — wallet number format (Backend/src/interfaces/http/validators/wallet.validators.ts)", () => {
-  // These document the schema's ACTUAL current behaviour, including a bug
-  // found while writing this suite: the walletNumber regex
-  //   /^\+?[1-9]|d{9,14}$/
-  // is missing a backslash before the second `d` (should be `\d{9,14}`),
-  // and the unescaped `|` alternates over the WHOLE pattern rather than
-  // being scoped inside it. The intended rule was almost certainly
-  // "starts with an optional + then a non-zero digit, followed by 9–14
-  // more digits". What it actually enforces is: "starts with '+' followed
-  // by 1-9" OR "ends with the literal letter d repeated 9–14 times" —
-  // neither of which is a phone-number check.
-
-  it("[BUG] currently accepts a string of literal letter 'd's as a valid wallet number", () => {
+describe("linkWalletSchema — wallet number format", () => {
+  it("accepts a valid Kenyan local-format number", () => {
     const result = linkWalletSchema.safeParse({
       provider: "MPESA",
-      walletNumber: "ddddddddddd", // 11 chars, well within 10-15
+      walletNumber: "0712345678",
     });
-    // This SHOULD fail — flagging with .success === true documents the bug
-    // rather than hiding it. If this assertion ever flips to false, the
-    // regex has been fixed and this test (and the finding in Chapter 7)
-    // should be updated accordingly.
     expect(result.success).toBe(true);
   });
 
-  it("rejects a wallet number that is too short regardless of the regex bug", () => {
+  it("accepts a valid international-format Kenyan number", () => {
     const result = linkWalletSchema.safeParse({
       provider: "MPESA",
-      walletNumber: "12345",
+      walletNumber: "+254712345678",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it("accepts a well-formed Kenyan M-Pesa number (incidentally, via the first alternative)", () => {
+  it("accepts a valid international number without the plus sign", () => {
     const result = linkWalletSchema.safeParse({
       provider: "MPESA",
       walletNumber: "254712345678",
     });
     expect(result.success).toBe(true);
+  });
+
+  it("rejects non-numeric wallet numbers", () => {
+    const result = linkWalletSchema.safeParse({
+      provider: "MPESA",
+      walletNumber: "ddddddddddd",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a wallet number that is too short", () => {
+    const result = linkWalletSchema.safeParse({
+      provider: "MPESA",
+      walletNumber: "123456789",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a wallet number that is too long", () => {
+    const result = linkWalletSchema.safeParse({
+      provider: "MPESA",
+      walletNumber: "+25471234567890",
+    });
+    expect(result.success).toBe(false);
   });
 
   it("rejects an unsupported provider value", () => {
