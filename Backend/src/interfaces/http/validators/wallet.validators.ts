@@ -8,7 +8,7 @@ export const linkWalletSchema = z.object({
         .min(10, "Wallet number must be at least 10 characters")
         .max(15, "Wallet number must not exceed 15 characters. ")
         .regex(
-            /^\+?[1-9]|d{9,14}$/,
+            /^\+?\d{9,14}$/,
             "Invalid wallet number format."
         )
         .trim(),
@@ -19,7 +19,7 @@ export const topUpSchema = z.object({
         .number()
         .positive("Amount must be greater than zero.")
         .max(10000, "Maximum top-up is $10,000."),
-        currency: z.string().length(3, "Currency must be a 3-letter code.").toUpperCase(),
+    currency: z.string().length(3, "Currency must be a 3-letter code.").toUpperCase(),
 });
 
 export type LinkWalletInput = z.infer<typeof linkWalletSchema>
